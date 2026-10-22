@@ -23,6 +23,26 @@ import tempfile
 COMMAND = ["/usr/local/bin/dataos-ctl", "develop", "assist", "mcp", "run"]
 
 
+def resolve_credential(name: str) -> str:
+    """Read a profile credential without exposing it in config or logs.
+
+    Hermes expands an MCP server's ``env`` block in the long-lived dashboard
+    process.  On DataOS that process starts before credentials are entered in
+    the Keys UI, so an interpolation can remain empty even though the current
+    profile's private ``.env`` contains the new value.  Use Hermes' scoped
+    credential resolver so every MCP subprocess sees the latest saved value.
+    """
+
+    try:
+        from hermes_cli.config import get_env_value_prefer_dotenv
+
+        return (get_env_value_prefer_dotenv(name) or "").strip()
+    except Exception:
+        # Startup and repair paths can invoke this shim without the repository
+        # import root.  Environment fallback preserves the Service identity.
+        return os.environ.get(name, "").strip()
+
+
 def ensure_cli_context() -> Path:
     """Create the non-secret DataOS CLI context required by the MCP command.
 
@@ -42,17 +62,24 @@ def ensure_cli_context() -> Path:
     # require the profile config to copy one variable into the other: an empty
     # interpolation would mask the valid projected Service credentials.
     user_id = (
-        os.environ.get("DATAOS_USER_ID", "").strip()
-        or os.environ.get("DATAOS_LOGIN_USER", "").strip()
-        or os.environ.get("DATAOS_OWNER_ID", "").strip()
-        or os.environ.get("DATAOS_RUN_AS_USER", "").strip()
+        resolve_credential("DATAOS_USER_ID")
+        or resolve_credential("DATAOS_LOGIN_USER")
+        or resolve_credential("DATAOS_OWNER_ID")
+        or resolve_credential("DATAOS_RUN_AS_USER")
     )
     api_key = (
-        os.environ.get("DATAOS_USER_API_KEY", "").strip()
-        or os.environ.get("DATAOS_RUN_AS_APIKEY", "").strip()
+        resolve_credential("DATAOS_USER_API_KEY")
+        or resolve_credential("DATAOS_RUN_AS_APIKEY")
     )
     if not user_id or not api_key:
         raise RuntimeError("DATAOS user ID and API key are required")
+
+    # dataos-ctl gives its run-as projection precedence over credential files.
+    # Replace the Service app-user projection inside this MCP subprocess only;
+    # otherwise the CLI silently calls Heimdall as ``alwaysonagent`` even when
+    # the owner supplied a valid personal key in the authenticated Keys UI.
+    os.environ["DATAOS_RUN_AS_USER"] = user_id
+    os.environ["DATAOS_RUN_AS_APIKEY"] = api_key
 
     # dataos-ctl requires a credential YAML even when run-as variables are
     # present.  Keep the whole CLI home process-local so the raw key never
@@ -118,7 +145,7 @@ def ensure_cli_context() -> Path:
     # JSON string literals are valid YAML scalars and safely quote every
     # operator-supplied character.  Write both locations used by this pinned
     # CLI version.  These files live only in the process-local /tmp directory.
-    credential = (
+    credential_yaml = (
         "user:\n"
         f"    id: {json.dumps(user_id)}\n"
         "    token:\n"
@@ -131,7 +158,7 @@ def ensure_cli_context() -> Path:
         config_dir / "dataos-agent" / ".dataos.cred.config.yaml",
     ):
         credential_file.parent.mkdir(parents=True, exist_ok=True)
-        credential_file.write_text(credential, encoding="utf-8")
+        credential_file.write_text(credential_yaml, encoding="utf-8")
         credential_file.chmod(0o600)
 
     return config_dir

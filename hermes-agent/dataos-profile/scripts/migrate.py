@@ -9,6 +9,47 @@ import re
 import stat
 
 
+DATAPRODUCT_MCP_BLOCK = '''  dataproduct-mcp:
+    url: "https://sawaniks-081726.instance.dataos.cloud/dataproduct-mcp/api/v1"
+    headers:
+      Authorization: "Bearer ${DATAOS_USER_API_KEY}"
+    trust: untrusted
+    timeout: 180
+    connect_timeout: 60
+    supports_parallel_tool_calls: false
+    tools:
+      include:
+        - search
+        - table_profile
+        - get_lineage
+        - vulcan_about
+        - vulcan_semantic_schema
+        - vulcan_quality
+        - vulcan_runs
+        - vulcan_query_submit
+        - vulcan_query_result
+      resources: false
+      prompts: false
+
+'''
+
+
+def canonicalize_dataproduct_mcp(text: str) -> str:
+    """Replace old/manual data-product connections without retaining tokens."""
+
+    text = text.replace("mcp-dataos-consumption", "mcp-dataproduct-mcp")
+    for name in ("dataos-consumption", "dataproduct-mcp"):
+        text = re.sub(
+            rf"(?ms)^  {re.escape(name)}:\n.*?(?=^  [A-Za-z0-9_-]+:\n|^[A-Za-z][A-Za-z0-9_-]*:\n|\Z)",
+            "",
+            text,
+        )
+    marker = "  dataos-docs:\n"
+    if marker not in text:
+        raise RuntimeError("cannot place dataproduct-mcp without dataos-docs boundary")
+    return text.replace(marker, DATAPRODUCT_MCP_BLOCK + marker, 1)
+
+
 def remove_openai_key(home: Path) -> None:
     """Remove the retired OpenAI credential without logging its value."""
     env_path = home / ".env"
@@ -45,6 +86,7 @@ def main() -> None:
         'Authorization: "Bearer ${DATAOS_RUN_AS_APIKEY}"',
         'Authorization: "Bearer ${DATAOS_USER_API_KEY}"',
     )
+    updated = canonicalize_dataproduct_mcp(updated)
 
     # MCP subprocesses receive only their declared env block. Pass both the
     # optional owner credentials and the Service projections; the wrapper

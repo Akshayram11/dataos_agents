@@ -47,20 +47,27 @@ function parseEnv(raw: string): Record<string, string> {
   return env;
 }
 
-export function buildMcpServerCreate(draft: McpServerDraft): McpServerCreate {
+export function buildMcpServerCreate(
+  draft: McpServerDraft,
+  options: { allowMissingBearer?: boolean } = {},
+): McpServerCreate {
   const name = draft.name.trim();
   if (!name) throw new Error("Name required");
 
   if (draft.transport === "http") {
     const url = draft.url.trim();
     if (!url) throw new Error("URL required");
-    if (draft.httpAuth === "header" && !draft.bearerToken.trim()) {
+    if (
+      draft.httpAuth === "header" &&
+      !draft.bearerToken.trim() &&
+      !options.allowMissingBearer
+    ) {
       throw new Error("Bearer token required");
     }
 
     const server: McpServerCreate = { name, url };
     if (draft.httpAuth !== "none") server.auth = draft.httpAuth;
-    if (draft.httpAuth === "header") {
+    if (draft.httpAuth === "header" && draft.bearerToken.trim()) {
       server.bearer_token = draft.bearerToken;
     }
     return server;

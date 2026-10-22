@@ -33,7 +33,7 @@ def main() -> None:
         "dataos-agent-factory",
         "dataos-bot-orchestrator",
         "dataos-cli-operator",
-        "dataos-consumption",
+        "data-product-mcp",
         "dataos-evidence",
         "design-data-product",
         "fix-data-product",
@@ -92,7 +92,7 @@ def main() -> None:
     for toolset in ("browser", "computer_use", "image_gen", "video_gen", "tts", "messaging"):
         if f"    - {toolset}" not in config:
             raise SystemExit(f"generic toolset is not explicitly disabled: {toolset}")
-    for server in ("dataos-cli", "dataos-consumption", "dataos-docs"):
+    for server in ("dataos-cli", "dataproduct-mcp", "dataos-docs"):
         if f"  {server}:" not in config:
             raise SystemExit(f"missing MCP server: {server}")
     for required_setting in (
@@ -104,6 +104,7 @@ def main() -> None:
         'DATAOS_FQDN: "${DATAOS_FQDN}"',
         'DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"',
         'Authorization: "Bearer ${DATAOS_USER_API_KEY}"',
+        'url: "https://sawaniks-081726.instance.dataos.cloud/dataproduct-mcp/api/v1"',
         'command: /opt/hermes/.venv/bin/python',
         'args: [/opt/hermes/dataos-profile/scripts/dataos_mcp_stdio.py]',
         'LOG_LEVEL: "error"',
@@ -118,6 +119,8 @@ def main() -> None:
             raise SystemExit(f"Service credential projection is masked: {masked_projection}")
     if "api_server:\n    enabled: false" not in config:
         raise SystemExit("generic api_server platform must be disabled")
+    if "dataos-consumption" in config or "/arguss/mcp/" in config:
+        raise SystemExit("retired Arguss consumption MCP is still configured")
     required_tools = (
         "dataos_resource_get",
         "dataos_resource_apply",

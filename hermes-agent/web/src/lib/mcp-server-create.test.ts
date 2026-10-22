@@ -49,6 +49,24 @@ describe("buildMcpServerCreate", () => {
     });
   });
 
+  it("allows an edit request to retain an existing Bearer token", () => {
+    expect(
+      buildMcpServerCreate(
+        {
+          ...emptyMcpServerDraft(),
+          name: "data-product",
+          url: "https://example.com/mcp",
+          httpAuth: "header",
+        },
+        { allowMissingBearer: true },
+      ),
+    ).toEqual({
+      name: "data-product",
+      url: "https://example.com/mcp",
+      auth: "header",
+    });
+  });
+
   it("parses stdio arguments and environment assignments", () => {
     const server = buildMcpServerCreate({
       ...emptyMcpServerDraft(),

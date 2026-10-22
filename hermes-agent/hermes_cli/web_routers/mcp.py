@@ -180,6 +180,75 @@ async def replace_mcp_servers(body: MCPServersReplace, profile: Optional[str] = 
     return {"ok": True}
 
 
+@router.put("/api/mcp/servers/{name}")
+async def update_mcp_server(name: str, body: MCPServerCreate, profile: Optional[str] = None):
+    """Update one user-managed MCP server without returning stored credentials.
+
+    A blank Bearer token retains the existing profile secret. For stdio
+    connections, an empty env map retains the existing env map because the
+    list response intentionally redacts its values.
+    """
+    from hermes_cli.mcp_config import _get_mcp_servers, _save_bearer_auth_token, _save_mcp_server
+
+    if (body.name or "").strip() != name:
+        raise HTTPException(status_code=400, detail="Server name cannot be changed")
+
+    def _run():
+        with config_write_scope(body.profile or profile):
+            config_servers = _get_mcp_servers()
+            from tui_gateway.mcp_rpc_helpers import server_configs_with_sources
+
+            servers, plugins = server_configs_with_sources(config_servers)
+            if plugin := plugins.get(name):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Server '{name}' is provided by plugin '{plugin}' and cannot be modified",
+                )
+            existing = servers.get(name)
+            if not isinstance(existing, dict):
+                raise HTTPException(status_code=404, detail=f"Server '{name}' not found")
+
+            existing_headers = existing.get("headers") or {}
+            has_existing_bearer = isinstance(existing_headers, dict) and any(
+                str(key).lower() == "authorization" for key in existing_headers
+            )
+            try:
+                normalized_name, server_config, bearer_token = _normalize_mcp_server_create(
+                    body, allow_existing_bearer=has_existing_bearer
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+            if normalized_name != name:
+                raise HTTPException(status_code=400, detail="Server name cannot be changed")
+            if bearer_token is not None:
+                server_config["headers"] = _save_bearer_auth_token(name, bearer_token)
+            elif server_config.get("headers") and has_existing_bearer:
+                # Keep the exact existing reference (for example
+                # ${DATAOS_USER_API_KEY}); never rewrite it to a new, unset env key.
+                server_config["headers"] = dict(existing_headers)
+            if server_config.get("command") and not body.env and isinstance(existing.get("env"), dict):
+                server_config["env"] = dict(existing["env"])
+            for retained_key in ("enabled", "tools"):
+                if retained_key in existing:
+                    server_config[retained_key] = existing[retained_key]
+            if not _save_mcp_server(name, server_config):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Server '{name}' rejected: suspicious command/args configuration",
+                )
+            return server_config
+
+    try:
+        server_config = await asyncio.to_thread(_run)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _log.exception("PUT /api/mcp/servers/%s failed", name)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _mcp_server_summary(name, server_config)
+
+
 @router.delete("/api/mcp/servers/{name}")
 async def remove_mcp_server(name: str, profile: Optional[str] = None):
     from hermes_cli.mcp_config import _get_mcp_servers, _remove_mcp_server

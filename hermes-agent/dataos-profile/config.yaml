@@ -12,7 +12,7 @@ toolsets:
   - delegation
   - clarify
   - mcp-dataos-cli
-  - mcp-dataos-consumption
+  - mcp-dataproduct-mcp
   - mcp-dataos-docs
 
 agent:
@@ -86,8 +86,8 @@ mcp_servers:
       resources: false
       prompts: false
 
-  dataos-consumption:
-    url: "https://${DATAOS_FQDN}/arguss/mcp/"
+  dataproduct-mcp:
+    url: "https://sawaniks-081726.instance.dataos.cloud/dataproduct-mcp/api/v1"
     headers:
       Authorization: "Bearer ${DATAOS_USER_API_KEY}"
     trust: untrusted

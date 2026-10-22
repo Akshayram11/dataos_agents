@@ -325,6 +325,7 @@ as_hermes mkdir -p \
     "$HERMES_HOME/skins" \
     "$HERMES_HOME/plans" \
     "$HERMES_HOME/workspace" \
+    "$HERMES_HOME/workspace/repos" \
     "$HERMES_HOME/home" \
     "$HERMES_HOME/pairing" \
     "$HERMES_HOME/platforms/pairing"

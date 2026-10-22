@@ -32,6 +32,7 @@ import {
   FolderOpen,
   FileText,
   Globe,
+  GitBranch,
   Heart,
   KeyRound,
   Menu,
@@ -84,6 +85,7 @@ const ProfilesPage = lazy(() => import("@/pages/ProfilesPage"));
 const ProfileBuilderPage = lazy(() => import("@/pages/ProfileBuilderPage"));
 const SkillsPage = lazy(() => import("@/pages/SkillsPage"));
 const McpPage = lazy(() => import("@/pages/McpPage"));
+const WorkspacesPage = lazy(() => import("@/pages/WorkspacesPage"));
 const ChatPage = lazy(() => import("@/pages/ChatPage"));
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -152,6 +154,7 @@ const BUILTIN_ROUTES_CORE: Record<string, ComponentType> = {
   "/cron": CronPage,
   "/skills": SkillsPage,
   "/mcp": McpPage,
+  "/workspaces": WorkspacesPage,
   "/profiles": ProfilesPage,
   "/profiles/new": ProfileBuilderPage,
   "/env": EnvPage,
@@ -183,6 +186,7 @@ const BUILTIN_NAV_REST: NavItem[] = [
   { path: "/cron", labelKey: "cron", label: "Automations", icon: Clock },
   { path: "/skills", labelKey: "skills", label: "DataOS Skills", icon: Package },
   { path: "/mcp", label: "DataOS Connections", icon: Plug },
+  { path: "/workspaces", label: "Repository Workspace", icon: GitBranch },
   { path: "/profiles", labelKey: "profiles", label: "Bots", icon: Users },
   { path: "/env", labelKey: "keys", label: "Keys", icon: KeyRound },
 ];

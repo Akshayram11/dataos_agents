@@ -14,7 +14,9 @@ from hermes_cli.config import redact_key
 from hermes_cli.web_models import MCPServerCreate
 
 
-def _normalize_mcp_server_create(body: MCPServerCreate) -> tuple[str, dict[str, Any], Optional[str]]:
+def _normalize_mcp_server_create(
+    body: MCPServerCreate, *, allow_existing_bearer: bool = False
+) -> tuple[str, dict[str, Any], Optional[str]]:
     """Validate a Dashboard MCP create request and build its safe config.
 
     The returned config never contains the Bearer token; callers persist it via
@@ -46,7 +48,7 @@ def _normalize_mcp_server_create(body: MCPServerCreate) -> tuple[str, dict[str, 
             raise ValueError("Environment variables are only supported for stdio MCP servers")
         if auth == "header":
             normalized = _strip_bearer_prefix(bearer_token) if bearer_token else ""
-            if not normalized or normalized.lower() == "bearer":
+            if (not normalized or normalized.lower() == "bearer") and not allow_existing_bearer:
                 raise ValueError("Bearer token is required")
             server_config["headers"] = _bearer_auth_headers(name)
         elif body.bearer_token is not None:

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { KeyRound, Package, Power, Server, Trash2, X, Zap } from "lucide-react";
+import { KeyRound, Package, Pencil, Power, Server, Trash2, X, Zap } from "lucide-react";
 import { Badge } from "@nous-research/ui/ui/components/badge";
 import { Button } from "@nous-research/ui/ui/components/button";
 import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
@@ -71,6 +71,95 @@ export default function McpPage() {
     open: createModalOpen,
     onClose: closeCreateModal,
   });
+
+  // Edit modal state. Secret values are never loaded from the server.
+  const [editingServer, setEditingServer] = useState<McpServer | null>(null);
+  const [editTransport, setEditTransport] = useState<McpTransport>("http");
+  const [editUrl, setEditUrl] = useState("");
+  const [editHttpAuth, setEditHttpAuth] = useState<McpHttpAuth>("none");
+  const [editBearerToken, setEditBearerToken] = useState("");
+  const [editCommand, setEditCommand] = useState("");
+  const [editArgs, setEditArgs] = useState("");
+  const [editEnv, setEditEnv] = useState("");
+  const [updating, setUpdating] = useState(false);
+  const closeEditModal = useCallback(() => {
+    setEditBearerToken("");
+    setEditingServer(null);
+  }, []);
+  const editModalRef = useModalBehavior({
+    open: editingServer !== null,
+    onClose: closeEditModal,
+  });
+
+  const openEditModal = (server: McpServer) => {
+    setEditingServer(server);
+    setEditTransport(server.transport === "stdio" ? "stdio" : "http");
+    setEditUrl(server.url ?? "");
+    setEditHttpAuth(server.auth ?? "none");
+    setEditBearerToken("");
+    setEditCommand(server.command ?? "");
+    setEditArgs((server.args ?? []).join(" "));
+    setEditEnv("");
+  };
+
+  const handleUpdate = async () => {
+    if (!editingServer) return;
+    let body;
+    try {
+      body = buildMcpServerCreate(
+        {
+          name: editingServer.name,
+          transport: editTransport,
+          url: editUrl,
+          httpAuth: editHttpAuth,
+          bearerToken: editBearerToken,
+          command: editCommand,
+          args: editArgs,
+          env: editEnv,
+        },
+        { allowMissingBearer: editingServer.auth === "header" },
+      );
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Invalid MCP server", "error");
+      return;
+    }
+    setUpdating(true);
+    try {
+      const serverName = editingServer.name;
+      await api.updateMcpServer(serverName, body);
+      let connectionResult: McpTestResult;
+      try {
+        connectionResult = await api.testMcpServer(serverName);
+      } catch (testError) {
+        connectionResult = {
+          ok: false,
+          error: errorMessage(testError),
+          tools: [],
+        };
+      }
+      setTestResults((prev) => ({
+        ...prev,
+        [serverName]: connectionResult,
+      }));
+      closeEditModal();
+      await loadServers();
+      if (connectionResult.ok) {
+        showToast(
+          `Saved & connected: "${truncateText(serverName, 30)}" · ${connectionResult.tools.length} tool(s)`,
+          "success",
+        );
+      } else {
+        showToast(
+          `Saved, but connection failed: ${connectionResult.error ?? "Unknown MCP error"}`,
+          "error",
+        );
+      }
+    } catch (e) {
+      showToast(`Could not update the MCP server: ${errorMessage(e)}`, "error");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   // Test results keyed by server name
   const [testing, setTesting] = useState<string | null>(null);
@@ -398,7 +487,7 @@ export default function McpPage() {
                     if (nextTransport === "stdio") setBearerToken("");
                   }}
                 >
-                  <SelectOption value="http">HTTP/SSE</SelectOption>
+                      <SelectOption value="http">Streamable HTTP</SelectOption>
                   <SelectOption value="stdio">stdio</SelectOption>
                 </Select>
               </div>
@@ -499,6 +588,175 @@ export default function McpPage() {
                   prefix={creating ? <Spinner /> : undefined}
                 >
                   {creating ? "Adding..." : "Add"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit server modal. Existing secrets are retained unless replaced. */}
+      {editingServer && (
+        <div
+          ref={editModalRef}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/85 p-4"
+          onClick={(e) => e.target === e.currentTarget && closeEditModal()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-mcp-title"
+        >
+          <div
+            className={cn(
+              themedBody,
+              "relative w-full max-w-lg border border-border bg-card shadow-2xl flex flex-col",
+            )}
+          >
+            <Button
+              ghost
+              size="icon"
+              onClick={closeEditModal}
+              className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              aria-label="Close"
+            >
+              <X />
+            </Button>
+
+            <header className="p-5 pb-3 border-b border-border">
+              <h2
+                id="edit-mcp-title"
+                className="font-mondwest text-display text-base tracking-wider"
+              >
+                Edit {editingServer.name}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Saved credentials are never returned to this page.
+              </p>
+            </header>
+
+            <div className="p-5 grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-mcp-name">Name</Label>
+                <Input id="edit-mcp-name" value={editingServer.name} disabled />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-mcp-transport">Transport</Label>
+                <Select
+                  id="edit-mcp-transport"
+                  value={editTransport}
+                  onValueChange={(value) => {
+                    const nextTransport = value as McpTransport;
+                    setEditTransport(nextTransport);
+                    if (nextTransport === "stdio") setEditBearerToken("");
+                  }}
+                >
+                  <SelectOption value="http">Streamable HTTP</SelectOption>
+                  <SelectOption value="stdio">stdio</SelectOption>
+                </Select>
+              </div>
+
+              {editTransport === "http" ? (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-mcp-url">URL</Label>
+                    <Input
+                      id="edit-mcp-url"
+                      autoFocus
+                      placeholder="https://example.com/mcp"
+                      value={editUrl}
+                      onChange={(e) => setEditUrl(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-mcp-auth">Authentication</Label>
+                    <Select
+                      id="edit-mcp-auth"
+                      value={editHttpAuth}
+                      onValueChange={(value) => {
+                        const nextAuth = value as McpHttpAuth;
+                        setEditHttpAuth(nextAuth);
+                        if (nextAuth !== "header") setEditBearerToken("");
+                      }}
+                    >
+                      <SelectOption value="none">None</SelectOption>
+                      <SelectOption value="header">Bearer token</SelectOption>
+                      <SelectOption value="oauth">OAuth</SelectOption>
+                    </Select>
+                  </div>
+                  {editHttpAuth === "header" && (
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <Label htmlFor="edit-mcp-bearer-token">Bearer token</Label>
+                        {editingServer.auth === "header" && !editBearerToken && (
+                          <Badge tone="success">Saved securely</Badge>
+                        )}
+                      </div>
+                      <Input
+                        id="edit-mcp-bearer-token"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder={
+                          editingServer.auth === "header"
+                            ? "•••••••••••••••• — saved token retained"
+                            : "Paste the bearer token"
+                        }
+                        value={editBearerToken}
+                        onChange={(e) => setEditBearerToken(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {editingServer.auth === "header"
+                          ? "The saved token stays connected. Type a new token only when you want to replace it."
+                          : "Paste the raw token without the Bearer prefix."}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-mcp-command">Command</Label>
+                    <Input
+                      id="edit-mcp-command"
+                      autoFocus
+                      value={editCommand}
+                      onChange={(e) => setEditCommand(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-mcp-args">Args</Label>
+                    <Input
+                      id="edit-mcp-args"
+                      value={editArgs}
+                      onChange={(e) => setEditArgs(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-mcp-env">
+                      Replace environment (KEY=VALUE per line)
+                    </Label>
+                    <textarea
+                      id="edit-mcp-env"
+                      className="flex min-h-[80px] w-full border border-border bg-background/40 px-3 py-2 text-sm font-courier shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 focus-visible:border-foreground/25"
+                      placeholder="Leave blank to retain saved environment values"
+                      value={editEnv}
+                      onChange={(e) => setEditEnv(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button ghost size="sm" onClick={closeEditModal} disabled={updating}>
+                  Cancel
+                </Button>
+                <Button
+                  className="uppercase"
+                  size="sm"
+                  onClick={handleUpdate}
+                  disabled={updating}
+                  prefix={updating ? <Spinner /> : <Pencil />}
+                >
+                  {updating ? "Saving & testing..." : "Save & test"}
                 </Button>
               </div>
             </div>
@@ -692,6 +950,17 @@ export default function McpPage() {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
+                  {server.source !== "plugin" && (
+                    <Button
+                      ghost
+                      size="icon"
+                      title="Edit server"
+                      aria-label={`Edit ${server.name}`}
+                      onClick={() => openEditModal(server)}
+                    >
+                      <Pencil />
+                    </Button>
+                  )}
                   {server.auth === "oauth" && (
                     <Button
                       ghost

@@ -104,6 +104,7 @@ const PROFILE_SCOPED_PREFIXES = [
   "/api/config",
   "/api/env",
   "/api/mcp",
+  "/api/dataos/workspace",
   "/api/messaging/platforms",
   "/api/messaging/telegram/onboarding",
   "/api/messaging/whatsapp/onboarding",
@@ -416,6 +417,18 @@ function appendSessionFilters(url: string, options: SessionQueryOptions): string
 export const api = {
   buildWsUrl,
   getStatus: () => fetchJSON<StatusResponse>("/api/status"),
+  getBitbucketWorkspace: () =>
+    fetchJSON<BitbucketWorkspace>("/api/dataos/workspace"),
+  saveBitbucketWorkspace: (body: BitbucketWorkspacePut) =>
+    fetchJSON<BitbucketWorkspace>("/api/dataos/workspace", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  syncBitbucketWorkspace: () =>
+    fetchJSON<BitbucketWorkspace>("/api/dataos/workspace/sync", {
+      method: "POST",
+    }),
   /**
    * Identity probe for the dashboard auth gate (Phase 7).
    *
@@ -1156,6 +1169,12 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
+  updateMcpServer: (name: string, body: McpServerCreate) =>
+    fetchJSON<McpServer>(`/api/mcp/servers/${encodeURIComponent(name)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
   authMcpServer: (name: string) =>
     fetchJSON<McpOAuthFlow>(
       `/api/mcp/servers/${encodeURIComponent(name)}/auth`,
@@ -1602,6 +1621,32 @@ export interface McpServer {
   auth: "header" | "oauth" | null;
   enabled: boolean;
   tools: string[] | null;
+  source: "config" | "plugin";
+  plugin?: string | null;
+}
+
+export interface BitbucketWorkspace {
+  configured: boolean;
+  token_saved: boolean;
+  repository_url: string;
+  branch: string;
+  username: string;
+  commit_name: string;
+  commit_email: string;
+  workspace_path: string;
+  workspace_ready: boolean;
+  vulcan_runtime: string;
+  connected?: boolean;
+}
+
+export interface BitbucketWorkspacePut {
+  repository_url: string;
+  branch: string;
+  token: string;
+  username: string;
+  commit_name: string;
+  commit_email: string;
+  prepare_workspace: boolean;
 }
 
 export interface McpCatalogEntry {
