@@ -1,0 +1,32 @@
+kind: dq
+name: regions_ext_dq
+depends_on: '"postgres"."public"."regions_ext"'
+profiles:
+  - region_id
+  - region_name
+rules:
+  - missing_count(region_id) = 0:
+      name: no_missing_region_ids
+      dimension: completeness
+      description: Region grain must be populated on the source table
+  - missing_count(region_name) = 0:
+      name: no_missing_region_names
+      dimension: completeness
+      description: Every source region must have a name
+  - duplicate_count(region_id) = 0:
+      name: unique_region_ids
+      dimension: uniqueness
+      description: region_id is the source table grain
+  - row_count > 0:
+      name: regions_exist
+      dimension: completeness
+      description: The source region table must contain rows
+  - failed rows:
+      name: region_names_are_known
+      dimension: validity
+      fail query: |
+        SELECT region_id, region_name
+        FROM public.regions_ext
+        WHERE region_name NOT IN ('North', 'South', 'East', 'West', 'Central')
+      samples limit: 20
+      description: Source region names must be one of the five sales regions

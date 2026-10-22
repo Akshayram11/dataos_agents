@@ -1,0 +1,22 @@
+MODEL (
+  name raw.raw_orders,
+  kind SEED (
+    path '../../seeds/raw_orders.csv'
+  ),
+  description 'Seed model loading raw order data from csv file',
+  tags ('seed', 'raw', 'orders', 'sales_analytics'),
+  terms ('sales.analytics', 'order.transactions'),
+  columns (
+    order_id VARCHAR(10),
+    order_date DATE,
+    customer_id VARCHAR(10),
+    product_id VARCHAR(10),
+    quantity NUMERIC(38,0),
+    unit_price NUMERIC(10,2),
+    discount NUMERIC(5,2),
+    tax NUMERIC(10,2),
+    shipping_cost NUMERIC(10,2),
+    total_amount NUMERIC(10,2)
+  ),
+  grain order_id
+);

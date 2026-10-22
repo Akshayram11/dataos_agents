@@ -1,0 +1,28 @@
+type: policy
+name: comsec_equipment_access
+depends_on:
+  - bronze_ccc.comsec_equipment
+
+rules:
+  - group: admin
+  - group: platinum_access
+    mask:
+      - custodian_ssn
+  - group: gold_access
+    mask:
+      - custodian_ssn
+    filter:
+      - member: classification_level
+        operator: equals
+        values:
+          - CUI
+          - SECRET
+  - group: silver_access
+    mask:
+      - custodian_ssn
+      - assigned_custodian_name
+    filter:
+      - member: classification_level
+        operator: equals
+        values:
+          - CUI

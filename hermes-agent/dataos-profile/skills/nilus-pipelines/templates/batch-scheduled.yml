@@ -1,0 +1,33 @@
+name: nilus-batch-example
+version: v1alpha
+type: nilus
+spec:
+  type: batch
+  compute: runnable
+  schedule:
+    crons:
+      - "30 11 * * *"
+    concurrencyPolicy: Forbid
+  use:
+    projection:
+      secrets:
+        - id: engineering:niluspgsecret
+          contextAlias: pgsecret
+      projections:
+        envVars:
+          - key: PG_USERNAME
+            template: "{{ secrets['pgsecret'].username | base64_decode }}"
+          - key: PG_PASSWORD
+            template: "{{ secrets['pgsecret'].password | base64_decode }}"
+  source:
+    address: postgresql://{PG_USERNAME}:{PG_PASSWORD}@host:5432/postgres
+    options:
+      source_table: "public.customer"
+      mask:
+        email: hash
+        phone: "partial:3"
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.customer
+      incremental_strategy: replace

@@ -1,0 +1,12 @@
+{
+  "name": "@@state_volume@@",
+  "version": "v2alpha",
+  "type": "volume",
+  "description": "Private persistent state for the DataOS operations observer",
+  "tags": ["operations", "observer", "private"],
+  "spec": {
+    "dataplane": "@@dataplane@@",
+    "size": "1Gi",
+    "type": "disk"
+  }
+}

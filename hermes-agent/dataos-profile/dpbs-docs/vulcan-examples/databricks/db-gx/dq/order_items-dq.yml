@@ -1,0 +1,397 @@
+kind: dq
+name: order_items_dq
+depends_on: bronzev1.order_items
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: filtered_line_items_exist
+    description: Checklist — DQ file-level filter (quantity > 0)
+- expectation: expect_column_values_to_not_be_null
+  column: product_id
+  meta:
+    dimension: completeness
+    name: no_missing_product_id
+- expectation: expect_compound_columns_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_line_grain
+  column_list:
+  - order_id
+  - item_id
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: SELECT src.* FROM {batch} AS src LEFT JOIN bronzev1.products AS ref ON src.product_id = ref.product_id
+    WHERE src.product_id IS NOT NULL AND ref.product_id IS NULL
+  meta:
+    dimension: consistency
+    name: product_id_referential
+    description: Checklist — values in must exist in (native referential)
+- expectation: expect_column_mean_to_be_between
+  column: quantity
+  min_value: 0.0
+  max_value: null
+  strict_min: true
+  meta:
+    dimension: accuracy
+    name: avg_quantity_positive
+    description: Checklist — avg metric
+- expectation: expect_column_min_to_be_between
+  column: unit_price
+  min_value: 0.0
+  max_value: null
+  meta:
+    dimension: accuracy
+    name: min_unit_price_non_negative
+- expectation: expect_column_max_to_be_between
+  column: unit_price
+  min_value: null
+  max_value: 1000000.0
+  strict_max: true
+  meta:
+    dimension: accuracy
+    name: max_unit_price_bounded
+- expectation: expect_column_sum_to_be_between
+  column: quantity
+  min_value: 0.0
+  max_value: null
+  strict_min: true
+  meta:
+    dimension: accuracy
+    name: sum_quantity_positive
+- expectation: expect_column_quantile_values_to_be_between
+  column: unit_price
+  quantile_ranges:
+    quantiles:
+    - 0.95
+    value_ranges:
+    - - null
+      - 100000.0
+  meta:
+    dimension: accuracy
+    name: p95_unit_price_bounded
+    description: Checklist — percentile metric
+- expectation: expect_column_mean_to_be_between
+  column: quantity
+  min_value: 0.0
+  max_value: 1000.0
+  meta:
+    dimension: accuracy
+    name: avg_quantity_between
+    description: Checklist — metric check with between
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: row_count_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs); native anomaly needs 4+ cadenced scans
+  threshold_upper: 100.0
+- expectation: vulcan_change_over_time
+  metric: avg
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: avg_quantity_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs)
+  threshold_upper: 100.0
+  column: quantity
+- expectation: vulcan_change_over_time
+  metric: missing_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: missing_product_id_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs)
+  threshold_upper: 100.0
+  column: product_id
+- expectation: vulcan_change_over_time
+  metric: duplicate_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: duplicate_order_id_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs)
+  threshold_upper: 100.0
+  column: order_id
+- expectation: vulcan_change_over_time
+  metric: min
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: min_quantity_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs)
+  threshold_upper: 100.0
+  column: quantity
+- expectation: vulcan_change_over_time
+  metric: max
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: max_quantity_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs)
+  threshold_upper: 100.0
+  column: quantity
+- expectation: vulcan_change_over_time
+  metric: sum
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -100.0
+  meta:
+    dimension: accuracy
+    name: sum_quantity_anomaly
+    description: Checklist — change stand-in for anomaly (2 runs)
+  threshold_upper: 100.0
+  column: quantity
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: true
+  operator: '>='
+  threshold: -100.0
+  meta:
+    dimension: timeliness
+    name: row_count_change_percent
+    description: Checklist — change for row_count (needs prior run)
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -1000000.0
+  meta:
+    dimension: timeliness
+    name: row_count_change_range
+  threshold_upper: 1000000.0
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -1000000.0
+  threshold_upper: 1000000.0
+  meta:
+    dimension: timeliness
+    name: row_count_same_day_last_week
+    description: Harness — vs last run (Soda same_day_last_week needs 7d history)
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -1000000.0
+  threshold_upper: 1000000.0
+  meta:
+    dimension: timeliness
+    name: row_count_change_avg_last_7
+    description: Harness — vs last run (Soda avg last 7 needs 7 prior runs)
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: true
+  operator: '>='
+  threshold: -100.0
+  meta:
+    dimension: timeliness
+    name: row_count_change_ten_percent_floor
+    description: Checklist — change with percentage threshold
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -1000000.0
+  threshold_upper: 1000000.0
+  meta:
+    dimension: timeliness
+    name: row_count_absolute_change_gt_zero
+    description: Checklist — row_count delta vs last run (stable seed passes)
+- expectation: expect_column_max_to_be_between
+  column: unit_price
+  min_value: null
+  max_value: 1000000.0
+  meta:
+    dimension: accuracy
+    name: max_unit_price_lte
+    description: Checklist — metric <=
+- expectation: expect_column_sum_to_be_between
+  column: quantity
+  min_value: 0.0
+  max_value: null
+  strict_min: true
+  meta:
+    dimension: accuracy
+    name: intentional_fail_impossible_sum
+    description: Checklist — sum quantity positive on filtered seed (pass)
+- expectation: expect_column_stdev_to_be_between
+  column: quantity
+  min_value: 0
+  max_value: null
+  meta:
+    name: quantity_stddev
+    dimension: accuracy
+    description: Checklist — stddev (GX supplement)
+- expectation: expect_column_stdev_to_be_between
+  column: quantity
+  min_value: 0
+  max_value: null
+  meta:
+    name: quantity_stddev_pop
+    dimension: accuracy
+    description: Checklist — stddev_pop proxy
+- expectation: expect_column_stdev_to_be_between
+  column: quantity
+  min_value: 0
+  max_value: null
+  meta:
+    name: quantity_stddev_samp
+    dimension: accuracy
+    description: Checklist — stddev_samp proxy
+- expectation: expect_column_stdev_to_be_between
+  column: quantity
+  min_value: 0
+  max_value: null
+  meta:
+    name: quantity_variance
+    dimension: accuracy
+    description: Checklist — variance proxy via stdev
+- expectation: expect_column_stdev_to_be_between
+  column: quantity
+  min_value: 0
+  max_value: null
+  meta:
+    name: quantity_var_pop
+    dimension: accuracy
+    description: Checklist — var_pop proxy
+- expectation: expect_column_stdev_to_be_between
+  column: quantity
+  min_value: 0
+  max_value: null
+  meta:
+    name: quantity_var_samp
+    dimension: accuracy
+    description: Checklist — var_samp proxy
+- expectation: expect_column_values_to_not_be_null
+  column: order_id
+  meta:
+    name: no_missing_order_ids
+    dimension: completeness
+    description: Line items must reference an order
+- expectation: expect_column_values_to_not_be_null
+  column: item_id
+  meta:
+    name: no_missing_item_ids
+    dimension: completeness
+    description: Line item sequence is required
+- expectation: expect_column_values_to_not_be_null
+  column: product_id
+  meta:
+    name: no_missing_product_ids
+    dimension: completeness
+    description: Line items must reference a product
+- expectation: expect_column_values_to_not_be_null
+  column: quantity
+  meta:
+    name: no_missing_quantities
+    dimension: completeness
+    description: Quantity is required on every line
+- expectation: expect_compound_columns_to_be_unique
+  column_list:
+  - order_id
+  - item_id
+  meta:
+    name: unique_order_line_grain
+    dimension: uniqueness
+    description: Order ID and item ID form the line grain
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT oi.order_id, oi.item_id
+
+    FROM {batch} AS oi
+
+    LEFT JOIN bronzev1.orders AS o ON oi.order_id = o.order_id
+
+    WHERE o.order_id IS NULL
+
+    '
+  meta:
+    name: order_items_have_valid_orders
+    dimension: consistency
+    description: Every order item must reference an existing order
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT oi.order_id, oi.item_id, oi.product_id
+
+    FROM {batch} AS oi
+
+    LEFT JOIN bronzev1.products AS p ON oi.product_id = p.product_id
+
+    WHERE p.product_id IS NULL
+
+    '
+  meta:
+    name: order_items_have_valid_products
+    dimension: consistency
+    description: Every order item must reference an existing product
+- expectation: expect_column_values_to_be_between
+  column: unit_price
+  min_value: 0
+  max_value: 1000000
+  row_condition:
+    type: nullity
+    column:
+      name: unit_price
+    is_null: false
+  meta:
+    name: unit_price_in_valid_range
+    dimension: validity
+    description: Unit price must be non-negative and bounded on priced line items
+profiles:
+- quantity
+- unit_price
+- product_id
+filter: quantity > 0

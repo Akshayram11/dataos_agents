@@ -1,0 +1,50 @@
+kind: dq
+name: warehouses_dq
+depends_on: s3lhdepotrr.bronze_sparkv.warehouses
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: warehouses_exist
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: SELECT src.* FROM {batch} AS src LEFT JOIN s3lhdepotrr.bronze_sparkv.regions AS ref ON src."region_id" = ref."region_id" WHERE
+    src."region_id" IS NOT NULL AND ref."region_id" IS NULL
+  meta:
+    dimension: consistency
+    name: warehouse_region_referential
+    description: Checklist — referential consistency across schemas (same catalog)
+- expectation: expect_column_values_to_not_be_null
+  column: name
+  meta:
+    dimension: completeness
+    name: warehouse_names_present
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: intentional_warn_only_volume
+    description: Checklist — intentional WARN (warehouse count below 500k)
+- expectation: expect_column_values_to_not_be_null
+  column: warehouse_id
+  meta:
+    name: no_missing_warehouse_ids
+    dimension: completeness
+    description: Warehouse grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: region_id
+  meta:
+    name: no_missing_region_refs
+    dimension: completeness
+    description: Each warehouse belongs to a region
+- expectation: expect_column_values_to_be_unique
+  column: warehouse_id
+  meta:
+    name: unique_warehouse_ids
+    dimension: uniqueness
+    description: Warehouse ID is the table grain
+profiles:
+- warehouse_id
+- region_id

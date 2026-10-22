@@ -1,0 +1,74 @@
+kind: dq
+name: sales_funnel_analysis_dq
+depends_on: goldv1.sales_funnel_analysis
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: sales_funnel_has_rows
+    description: Sales funnel should produce regional funnel rows
+- expectation: expect_column_values_to_not_be_null
+  column: REGION_ID
+  meta:
+    dimension: completeness
+    name: no_missing_region_id
+    description: Region id is required
+- expectation: expect_column_values_to_be_between
+  column: OVERALL_CONVERSION_RATE
+  min_value: 0
+  max_value: 1
+  meta:
+    dimension: validity
+    name: overall_conversion_rate_range
+    description: Overall conversion rate must be between 0 and 1
+- expectation: expect_column_values_to_be_between
+  column: ORDER_TO_SHIPMENT_RATE
+  min_value: 0
+  max_value: 1
+  meta:
+    dimension: validity
+    name: shipment_conversion_rate_range
+    description: Order to shipment rate must be between 0 and 1
+- expectation: expect_column_values_to_be_between
+  column: OVERALL_CONVERSION_RATE
+  min_value: 0
+  max_value: 1
+  meta:
+    dimension: validity
+    name: overall_conversion_rate_range_valid_range
+    description: Overall conversion rate must be between 0 and 1
+- expectation: expect_column_values_to_be_between
+  column: ORDER_TO_SHIPMENT_RATE
+  min_value: 0
+  max_value: 1
+  meta:
+    dimension: validity
+    name: shipment_conversion_rate_range_valid_range
+    description: Order to shipment rate must be between 0 and 1
+- expectation: expect_column_values_to_not_be_null
+  column: FUNNEL_DATE
+  meta:
+    name: no_missing_funnel_dates
+    dimension: completeness
+    description: Funnel snapshot date is required
+- expectation: expect_column_values_to_not_be_null
+  column: REGION_ID
+  meta:
+    name: no_missing_region_ids
+    dimension: completeness
+    description: Regional funnel grain requires region
+- expectation: expect_compound_columns_to_be_unique
+  column_list:
+  - FUNNEL_DATE
+  - REGION_ID
+  meta:
+    name: unique_funnel_grain
+    dimension: uniqueness
+    description: One funnel row per date and region
+profiles:
+- REGION_NAME
+- REGISTERED_CUSTOMERS
+- ORDERS_PLACED
+- OVERALL_CONVERSION_RATE

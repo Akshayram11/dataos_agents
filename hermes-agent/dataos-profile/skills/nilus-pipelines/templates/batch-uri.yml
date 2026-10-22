@@ -1,0 +1,29 @@
+name: pg-customer-uri
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Batch from a Postgres URI (no source depot)
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  use:
+    projection:
+      secrets:
+        - id: workspace:pg-source-secret
+          contextAlias: pgsecret
+      projections:
+        envVars:
+          - key: PG_USERNAME
+            template: "{{ secrets['pgsecret'].username | base64_decode }}"
+          - key: PG_PASSWORD
+            template: "{{ secrets['pgsecret'].password | base64_decode }}"
+  source:
+    address: postgresql://{PG_USERNAME}:{PG_PASSWORD}@host.example.com:5432/postgres
+    options:
+      source_table: "public.customer"
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.customer
+      incremental_strategy: replace

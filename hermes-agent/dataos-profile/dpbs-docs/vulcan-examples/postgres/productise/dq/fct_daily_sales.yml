@@ -1,0 +1,77 @@
+kind: dq
+name: fct_daily_sales_dq
+depends_on: silverv1.fct_daily_sales
+
+profiles:
+  - order_date
+  - region_name
+  - category
+  - total_revenue
+  - shipment_rate
+
+rules:
+  - row_count >= 20:
+      name: minimum_daily_sales_rows
+      dimension: completeness
+      description: Daily sales should contain at least 20 rows from the seed data
+  - missing_count(order_date) = 0:
+      name: no_missing_order_date
+      dimension: completeness
+      description: Order date is required
+  - missing_count(customer_id) = 0:
+      name: no_missing_customer_id
+      dimension: completeness
+      description: Customer id is required
+  - invalid_count(total_revenue) = 0:
+      valid min: 0
+      name: total_revenue_non_negative
+      dimension: validity
+      description: Revenue must be non-negative
+  - invalid_count(shipment_rate) = 0:
+      valid min: 0
+      valid max: 1
+      name: shipment_rate_between_zero_and_one
+      dimension: validity
+      description: Shipment rate must be between 0 and 1
+
+  - failed rows:
+      name: shipment_rate_matches_counts
+      dimension: accuracy
+      fail query: |
+        SELECT order_date, region_id, customer_id, product_id, total_orders, total_shipments, shipment_rate
+        FROM @this_model
+        WHERE total_orders > 0
+          AND ABS(
+            shipment_rate - ROUND(
+              CAST(total_shipments AS DECIMAL(18, 4)) / NULLIF(CAST(total_orders AS DECIMAL(18, 4)), 0),
+              4
+            )
+          ) > 0.0001
+      samples limit: 20
+      description: Shipment rate should match shipped orders divided by total orders at the daily grain
+  - failed rows:
+      name: expected_region_and_category_values
+      dimension: conformity
+      fail query: |
+        SELECT order_date, region_name, category
+        FROM @this_model
+        WHERE region_name NOT IN ('North', 'South', 'East', 'West', 'Central')
+           OR category NOT IN ('Widgets', 'Gadgets', 'Doohickeys', 'Thingamajigs')
+      samples limit: 20
+      description: Daily sales should conform to the expected region and category domains
+  - failed rows:
+      name: all_regions_are_covered
+      dimension: coverage
+      fail query: |
+        SELECT 'missing_region_coverage' AS issue_type
+        WHERE (SELECT COUNT(DISTINCT region_name) FROM @this_model) < 5
+      samples limit: 20
+      description: Daily sales should cover all five business regions
+  - failed rows:
+      name: generated_sales_window_is_current
+      dimension: timeliness
+      fail query: |
+        SELECT 'stale_generated_sales_window' AS issue_type
+        WHERE (SELECT MAX(CAST(order_date AS DATE)) FROM @this_model) < DATE '2025-06-01'
+      samples limit: 20
+      description: Generated daily sales should include data in the expected current analytical window

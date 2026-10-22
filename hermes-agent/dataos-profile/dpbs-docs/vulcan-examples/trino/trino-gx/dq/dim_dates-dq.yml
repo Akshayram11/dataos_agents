@@ -1,0 +1,85 @@
+kind: dq
+name: dim_dates_dq
+depends_on: bronzev2.dim_dates
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: calendar_has_dates
+- expectation: vulcan_freshness
+  column: dt
+  op: <
+  threshold_seconds: 315360000.0
+  meta:
+    dimension: timeliness
+    name: calendar_end_date_freshness
+    description: Checklist — freshness on calendar dt
+- expectation: expect_column_quantile_values_to_be_between
+  column: year
+  quantile_ranges:
+    quantiles:
+    - 0.5
+    value_ranges:
+    - - 2000.0
+      - null
+  meta:
+    dimension: accuracy
+    name: median_year_sane
+    description: Checklist — percentile metric
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: false
+  operator: between
+  threshold: -1000000.0
+  meta:
+    dimension: timeliness
+    name: calendar_row_count_change_range
+    description: Checklist — change range (needs prior run)
+  threshold_upper: 1000000.0
+- expectation: expect_column_values_to_be_between
+  column: year
+  min_value: 2020
+  max_value: 9999
+  meta:
+    dimension: validity
+    name: year_valid_range
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: intentional_fail_empty_calendar
+    description: Checklist — calendar has rows on seed (pass)
+- expectation: expect_column_values_to_be_between
+  column: year
+  min_value: 2020
+  max_value: 9999
+  meta:
+    dimension: validity
+    name: year_valid_range_valid_range
+- expectation: expect_column_values_to_not_be_null
+  column: dt
+  meta:
+    name: no_missing_dates
+    dimension: completeness
+    description: Calendar date is the dimension grain
+- expectation: expect_column_values_to_not_be_null
+  column: year
+  meta:
+    name: no_missing_years
+    dimension: completeness
+    description: Year attribute is required
+- expectation: expect_column_values_to_be_unique
+  column: dt
+  meta:
+    name: unique_calendar_days
+    dimension: uniqueness
+    description: One row per calendar day
+profiles:
+- dt
+- year

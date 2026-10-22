@@ -1,0 +1,60 @@
+{
+  "name": "@@agent_id@@",
+  "version": "v2alpha",
+  "type": "service",
+  "description": "Private DataOS Agent Builder with explicit PRD and deployment approval gates",
+  "tags": ["agent", "builder", "private", "governed"],
+  "spec": {
+    "compute": "@@compute@@",
+    "runAsUser": "@@agent_id@@",
+    "stateful": true,
+    "disk": {"size": "1Gi", "type": "disk", "mountPath": "/etc/dataos/persist"},
+    "replicas": 1,
+    "resources": {
+      "requests": {"cpu": "150m", "memory": "256Mi"},
+      "limits": {"cpu": "1000m", "memory": "1Gi"}
+    },
+    "http": {
+      "enabled": true,
+      "port": 8080,
+      "path": "/@@agent_id@@",
+      "stripPath": true,
+      "noNetworkAuthorization": true,
+      "ingress": {"enabled": true, "path": "/@@agent_id@@", "stripPath": true}
+    },
+    "envs": {
+      "PORT": "8080",
+      "AGENT_OWNER_ID": "@@operator_id@@",
+      "AGENT_DATAOS_FQDN": "@@host@@",
+      "AGENT_TENANT": "@@tenant@@",
+      "AGENT_BASE_PATH": "/@@agent_id@@/",
+      "OPENAI_MODEL": "@@model@@",
+      "STATE_FILE": "/etc/dataos/persist/agent-builder.json",
+      "SECRETS_FILE": "/etc/dataos/persist/agent-builder-secrets.enc",
+      "DATAOS_CONFIG_DIRECTORY": "/etc/dataos/cfg",
+      "AGENT_BUILD_ID": "@@build_id@@"
+    },
+    "use": {
+      "projection": {
+        "templateType": "liquid",
+        "projections": {
+          "envVars": [
+            {"key": "DATAOS_RUN_AS_APIKEY", "template": "{{ defaultProjections.dataOsRunAsApikey }}"},
+            {"key": "DATAOS_RUN_AS_USER", "template": "{{ defaultProjections.dataOsRunAsUser }}"},
+            {"key": "DATAOS_FQDN", "template": "{{ defaultProjections.dataOsFqdn }}"},
+            {"key": "DATAOS_TENANT_ID", "template": "{{ defaultProjections.dataOsTenantId }}"}
+          ]
+        }
+      }
+    },
+    "stack": "container:1.0",
+    "stackSpec": {
+      "image": "@@main_image@@",
+      "command": ["/bin/bash", "-c"],
+      "arguments": [
+        "set +x\nset -euo pipefail\numask 077\nexport PORT='8080'\nexport AGENT_OWNER_ID='@@operator_id@@'\nexport AGENT_DATAOS_FQDN='@@host@@'\nexport AGENT_TENANT='@@tenant@@'\nexport AGENT_BASE_PATH='/@@agent_id@@/'\nexport OPENAI_MODEL='@@model@@'\nexport STATE_FILE='/etc/dataos/persist/agent-builder.json'\nexport SECRETS_FILE='/etc/dataos/persist/agent-builder-secrets.enc'\nexport DATAOS_CONFIG_DIRECTORY='/etc/dataos/cfg'\nexport AGENT_BUILD_ID='@@build_id@@'\nmkdir -p /etc/dataos/work/agent-builder\n@@RUNTIME_FILES@@\nexec python3 /etc/dataos/work/agent-builder/server.py\n"
+      ]
+    },
+    "servicePorts": [{"name": "http", "port": 8080}]
+  }
+}

@@ -1,0 +1,25 @@
+name: typed-orders-batch
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Override inferred column types
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  source:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      source_table: public.orders
+      incremental_key: updated_at
+      primary_key: id
+      type_hints:
+        created_at: timestamp
+        updated_at: timestamp
+        amount: decimal
+        payload: json
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.orders
+      incremental_strategy: merge

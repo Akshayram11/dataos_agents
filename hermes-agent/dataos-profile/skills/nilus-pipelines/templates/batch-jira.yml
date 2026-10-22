@@ -1,0 +1,29 @@
+name: jira-issue-types
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch, jira]
+description: Fetch Jira issue types
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  use:
+    projection:
+      secrets:
+        - id: nilustesting:nilusjirasecret
+          contextAlias: jirasecret
+      projections:
+        envVars:
+          - key: JIRA_EMAIL
+            template: "{{ secrets['jirasecret'].email | base64_decode }}"
+          - key: JIRA_API_TOKEN
+            template: "{{ secrets['jirasecret'].api_token | base64_decode }}"
+  source:
+    address: jira://rubikai.atlassian.net?email={JIRA_EMAIL}&api_token={JIRA_API_TOKEN}
+    options:
+      source_table: issue_types
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.jira_issue_types
+      incremental_strategy: replace

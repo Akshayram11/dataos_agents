@@ -1,0 +1,10 @@
+name: nilus-state
+version: v2alpha
+type: volume
+tags:
+  - nilus
+description: Persistent disk for Nilus pipeline state
+volume:
+  size: 20Gi
+  type: disk
+  dataplane: <dataplane-name>

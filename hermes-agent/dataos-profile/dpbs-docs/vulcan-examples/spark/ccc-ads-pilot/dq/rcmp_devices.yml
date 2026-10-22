@@ -1,0 +1,84 @@
+kind: dq
+name: rcmp_devices_dq
+depends_on: bronze_ccc.rcmp_devices
+
+profiles:
+  - device_id
+  - equipment_model
+  - firmware_version
+  - firmware_release_date
+  - vulnerability_status
+  - cve_references
+  - cease_key_date
+  - modernization_status
+  - assigned_unit
+  - assigned_custodian
+  - installation_date
+  - last_audit_date
+  - certification_status
+  - next_certification_due_date
+  - operational_status
+
+rules:
+  - row_count >= 5000:
+      name: minimum_rcmp_seed_volume
+      dimension: completeness
+      description: RCMP pilot seed must include at least 5,000 synthetic records
+  - missing_count(device_id) = 0:
+      name: no_missing_device_id
+      dimension: completeness
+      description: Device ID is mandatory for ADS registration and quality tracking
+  - missing_count(assigned_custodian) = 0:
+      name: no_missing_assigned_custodian
+      dimension: completeness
+      description: Assigned custodian is treated as a T-0 accountability field for the pilot
+  - duplicate_count(device_id) = 0:
+      name: unique_rcmp_device_ids
+      dimension: uniqueness
+      description: Device IDs must be globally unique across assigned units
+  - failed rows:
+      name: allowed_vulnerability_status_values
+      dimension: validity
+      fail query: |
+        SELECT device_id, vulnerability_status
+        FROM @this_model
+        WHERE vulnerability_status NOT IN ('Open', 'Under Review', 'Closed')
+      samples limit: 20
+      description: Vulnerability Status must use the approved controlled vocabulary
+  - failed rows:
+      name: allowed_modernization_status_values
+      dimension: validity
+      fail query: |
+        SELECT device_id, modernization_status
+        FROM @this_model
+        WHERE modernization_status NOT IN ('Legacy', 'In Progress', 'Modernized')
+      samples limit: 20
+      description: Modernization Status must use the approved controlled vocabulary
+  - failed rows:
+      name: certified_devices_must_not_be_expired
+      dimension: accuracy
+      fail query: |
+        SELECT device_id, certification_status, next_certification_due_date
+        FROM @this_model
+        WHERE certification_status = 'Certified'
+          AND next_certification_due_date < DATE '2026-09-07'
+      samples limit: 20
+      description: Certified devices must not have an expired next certification due date
+  - failed rows:
+      name: firmware_refresh_window
+      dimension: timeliness
+      fail query: |
+        SELECT device_id, firmware_release_date
+        FROM @this_model
+        WHERE firmware_release_date < DATE '2025-09-07'
+      samples limit: 20
+      description: Firmware release date must be within the configured refresh frequency limit
+  - failed rows:
+      name: cease_key_not_passed
+      dimension: security
+      fail query: |
+        SELECT device_id, cease_key_date
+        FROM @this_model
+        WHERE cease_key_date < DATE '2026-09-07'
+      samples limit: 20
+      description: Cease-key dates already passed represent a security and timeliness failure

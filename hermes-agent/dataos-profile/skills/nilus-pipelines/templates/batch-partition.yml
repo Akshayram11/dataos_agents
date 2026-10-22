@@ -1,0 +1,28 @@
+name: lakehouse-orders-partitioned
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Incremental load with Iceberg day partition
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  source:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      source_table: public.orders
+      incremental_key: updated_at
+      primary_key: order_id
+      sql_exclude_columns: "debug_payload,raw_html"
+  sink:
+    address: dataos://orderslakehouse?purpose=rw
+    options:
+      dest_table: analytics.orders
+      incremental_strategy: merge
+      partition_by:
+        - column: updated_at
+          type: day
+          name: updated_at_day
+          index: 1
+      cluster_by:
+        - customer_id

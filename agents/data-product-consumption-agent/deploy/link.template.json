@@ -1,0 +1,21 @@
+{
+  "name": "@@agent_id@@-ui",
+  "version": "v1alpha",
+  "type": "link",
+  "title": "Data Product Consumption Agent",
+  "description": "Private agentic interface to governed DataOS data products",
+  "owner": "@@operator_id@@",
+  "tags": ["data-product", "consumption", "agent", "private"],
+  "spec": {
+    "runAsUser": "@@operator_id@@",
+    "link": {
+      "title": "Open Data Product Agent",
+      "description": "Find, trust and query governed data products through Arguss MCP.",
+      "domain": "data-product",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iNTgiIGhlaWdodD0iNTgiIGZpbGw9IiNmNWYzZWYiIHN0cm9rZT0iIzI0NmJmZSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHBhdGggZD0iTTE4IDIwSDQ2TTE4IDMySDQ2TTE4IDQ0SDM2IiBzdHJva2U9IiMxYzFjMWEiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InNxdWFyZSIvPjwvc3ZnPg==",
+      "owners": ["@@operator_id@@"],
+      "tags": ["data-product", "consumption", "agent", "private"],
+      "url": "https://@@host@@/@@agent_id@@/"
+    }
+  }
+}

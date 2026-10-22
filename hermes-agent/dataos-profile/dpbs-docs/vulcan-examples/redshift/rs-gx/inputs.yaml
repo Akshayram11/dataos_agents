@@ -1,0 +1,69 @@
+- name: '"postgres"."public"."orders_ext"'
+  grains: [order_id]
+  columns:
+    order_id: INT
+    customer_id: INT
+    order_date: TIMESTAMP
+    warehouse_id: INT
+    order_status: TEXT
+- name: '"postgres"."public"."order_items_ext"'
+  grains: [order_id, item_id]
+  columns:
+    order_id: INT
+    item_id: INT
+    product_id: INT
+    quantity: INT
+    unit_price: DECIMAL(10, 2)
+- name: '"postgres"."public"."customers_ext"'
+  grains: [customer_id]
+  columns:
+    customer_id: INT
+    region_id: INT
+    name: TEXT
+    email: TEXT
+    signup_date: DATE
+- name: '"postgres"."public"."products_ext"'
+  grains: [product_id]
+  columns:
+    product_id: INT 
+    supplier_id: INT
+    name: TEXT
+    category: TEXT
+    price: DECIMAL(10, 2)
+- name: '"postgres"."public"."regions_ext"'
+  grains: [region_id]
+  columns:
+    region_id: INT
+    region_name: TEXT
+  audits:
+    - name: unique_values
+      columns: "(region_id)"
+    - name: not_null
+      columns: "(region_id, region_name)"
+    - name: regions_ext_name_consistency
+- name: '"postgres"."public"."suppliers_ext"'
+  grains: [supplier_id]
+  columns:
+    supplier_id: INT
+    region_id: INT
+    name: TEXT
+- name: '"postgres"."public"."warehouses_ext"'
+  grains: [warehouse_id]
+  columns:
+    warehouse_id: INT
+    region_id: INT
+    name: TEXT
+- name: '"postgres"."public"."shipments_ext"'
+  grains: [shipment_id]
+  columns:
+    shipment_id: INT
+    order_id: INT
+    shipped_date: DATE
+    carrier: TEXT
+- name: '"postgres"."public"."dim_dates_ext"'
+  grains: [dt]
+  columns:
+    dt: DATE
+    year: INT
+    month: INT
+    day_of_week: TEXT

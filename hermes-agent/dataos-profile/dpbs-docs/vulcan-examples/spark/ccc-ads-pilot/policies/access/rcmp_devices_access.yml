@@ -1,0 +1,25 @@
+type: policy
+name: rcmp_devices_access
+depends_on:
+  - bronze_ccc.rcmp_devices
+
+rules:
+  - group: admin
+  - group: platinum_access
+  - group: gold_access
+    filter:
+      - member: assigned_unit
+        operator: equals
+        values:
+          - 24CYS
+          - 26NOS
+          - 33NWS
+          - 67CW
+          - 690NSS
+          - 688CW
+  - group: silver_access
+    filter:
+      - member: assigned_unit
+        operator: equals
+        values:
+          - 24CYS

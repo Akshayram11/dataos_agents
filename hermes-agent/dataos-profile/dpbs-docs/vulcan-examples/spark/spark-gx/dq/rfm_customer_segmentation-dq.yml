@@ -1,0 +1,80 @@
+kind: dq
+name: rfm_customer_segmentation_dq
+depends_on: s3lhdepotrr.gold_sparkv.rfm_customer_segmentation
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 10
+  max_value: null
+  meta:
+    dimension: completeness
+    name: minimum_rfm_rows
+    description: RFM output should include customer profiles
+- expectation: expect_column_values_to_not_be_null
+  column: customer_id
+  meta:
+    dimension: completeness
+    name: no_missing_customer_id
+    description: Customer id is required
+- expectation: expect_column_values_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_rfm_customer
+    description: One RFM row per customer
+  column: customer_id
+- expectation: expect_column_values_to_be_between
+  column: monetary_value
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: monetary_value_non_negative
+    description: Monetary value must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: recency_score
+  min_value: 1
+  max_value: 5
+  meta:
+    dimension: validity
+    name: recency_score_range
+    description: Recency score must be 1 through 5
+- expectation: expect_column_values_to_be_between
+  column: monetary_value
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: monetary_value_non_negative_valid_range
+    description: Monetary value must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: recency_score
+  min_value: 1
+  max_value: 5
+  meta:
+    dimension: validity
+    name: recency_score_range_valid_range
+    description: Recency score must be 1 through 5
+- expectation: expect_column_values_to_not_be_null
+  column: customer_id
+  meta:
+    name: no_missing_customer_ids
+    dimension: completeness
+    description: RFM grain must reference a customer
+- expectation: expect_column_values_to_not_be_null
+  column: rfm_segment
+  meta:
+    name: no_missing_segments
+    dimension: completeness
+    description: Every customer must have an RFM segment
+- expectation: expect_column_values_to_be_unique
+  column: customer_id
+  meta:
+    name: unique_customer_ids
+    dimension: uniqueness
+    description: One RFM row per customer
+profiles:
+- customer_id
+- rfm_segment
+- monetary_value
+- recency_score
+- frequency_score
+- monetary_score

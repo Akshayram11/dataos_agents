@@ -1,0 +1,47 @@
+[
+  {
+    "name": "consumption-@@agent_id@@-compute-use",
+    "collection": "@@tenant@@",
+    "description": "Run the private consumption agent on its configured compute",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read", "use"],
+    "objects": {"tags": [["dataos:resource:compute:v2alpha:@@compute@@"]]},
+    "allow": true
+  },
+  {
+    "name": "consumption-@@agent_id@@-compute-runtime-use",
+    "collection": "@@tenant@@",
+    "description": "Authorize the runtime compute use check",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["use"],
+    "objects": {"tags": [["dataos:resource:compute"]]},
+    "allow": true
+  },
+  {
+    "name": "consumption-@@agent_id@@-compute-runtime-read",
+    "collection": "@@tenant@@",
+    "description": "Authorize the runtime compute read check",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read"],
+    "objects": {"tags": [["dataos:resource:compute"]]},
+    "allow": true
+  },
+  {
+    "name": "consumption-@@agent_id@@-operator-run-as",
+    "collection": "@@tenant@@",
+    "description": "Allow the single owner to deploy the application identity",
+    "subjects": {"tags": ["users:id:@@operator_id@@"]},
+    "predicates": ["run_as"],
+    "objects": {"tags": [["users:id:@@agent_id@@"]]},
+    "allow": true
+  },
+  {
+    "name": "consumption-@@agent_id@@-private-ingress",
+    "collection": "system",
+    "description": "Allow only the configured owner to open the consumption agent",
+    "subjects": {"tags": ["users:id:@@operator_id@@"]},
+    "predicates": ["get", "post"],
+    "objects": {"paths": ["/@@agent_id@@", "/@@agent_id@@/**"]},
+    "allow": true
+  }
+]

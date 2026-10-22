@@ -1,0 +1,105 @@
+kind: dq
+name: orders_referential_integrity_dq
+depends_on: bronzev1.orders
+
+rules:
+  - failed rows:
+      name: orders_have_valid_customers
+      dimension: consistency
+      fail query: |
+        SELECT o.order_id, o.customer_id
+        FROM bronzev1.orders o
+        LEFT JOIN bronzev1.customers c ON o.customer_id = c.customer_id
+        WHERE c.customer_id IS NULL
+      samples limit: 20
+      description: Every order must reference an existing customer
+
+  - failed rows:
+      name: orders_have_valid_warehouses
+      dimension: consistency
+      fail query: |
+        SELECT o.order_id, o.warehouse_id
+        FROM bronzev1.orders o
+        LEFT JOIN bronzev1.warehouses w ON o.warehouse_id = w.warehouse_id
+        WHERE w.warehouse_id IS NULL
+      samples limit: 20
+      description: Every order must reference an existing warehouse
+
+  - failed rows:
+      name: orders_have_valid_status_lookup
+      dimension: consistency
+      fail query: |
+        SELECT o.order_id, o.order_status
+        FROM bronzev1.orders o
+        LEFT JOIN bronzev1.order_status_lookup osl ON o.order_status = osl.order_status
+        WHERE osl.order_status IS NULL
+      samples limit: 20
+      description: Every order status must exist in the static order status lookup seed
+
+  - failed rows:
+      name: order_items_have_valid_orders
+      dimension: consistency
+      fail query: |
+        SELECT oi.order_id, oi.item_id
+        FROM bronzev1.order_items oi
+        LEFT JOIN bronzev1.orders o ON oi.order_id = o.order_id
+        WHERE o.order_id IS NULL
+      samples limit: 20
+      description: Every order item must reference an existing order
+
+  - failed rows:
+      name: order_items_have_valid_products
+      dimension: consistency
+      fail query: |
+        SELECT oi.order_id, oi.item_id, oi.product_id
+        FROM bronzev1.order_items oi
+        LEFT JOIN bronzev1.products p ON oi.product_id = p.product_id
+        WHERE p.product_id IS NULL
+      samples limit: 20
+      description: Every order item must reference an existing product
+
+  - failed rows:
+      name: shipments_have_valid_orders
+      dimension: consistency
+      fail query: |
+        SELECT s.shipment_id, s.order_id
+        FROM bronzev1.shipments s
+        LEFT JOIN bronzev1.orders o ON s.order_id = o.order_id
+        WHERE o.order_id IS NULL
+      samples limit: 20
+      description: Every shipment must reference an existing order
+
+  - failed rows:
+      name: products_have_valid_suppliers
+      dimension: consistency
+      fail query: |
+        SELECT p.product_id, p.supplier_id
+        FROM bronzev1.products p
+        LEFT JOIN bronzev1.suppliers s ON p.supplier_id = s.supplier_id
+        WHERE s.supplier_id IS NULL
+      samples limit: 20
+      description: Every product must reference an existing supplier
+
+  - failed rows:
+      name: region_keys_are_shared
+      dimension: consistency
+      fail query: |
+        SELECT source_table, region_id
+        FROM (
+          SELECT 'customers' AS source_table, c.region_id
+          FROM bronzev1.customers c
+          LEFT JOIN bronzev1.regions r ON c.region_id = r.region_id
+          WHERE r.region_id IS NULL
+          UNION ALL
+          SELECT 'suppliers' AS source_table, s.region_id
+          FROM bronzev1.suppliers s
+          LEFT JOIN bronzev1.regions r ON s.region_id = r.region_id
+          WHERE r.region_id IS NULL
+          UNION ALL
+          SELECT 'warehouses' AS source_table, w.region_id
+          FROM bronzev1.warehouses w
+          LEFT JOIN bronzev1.regions r ON w.region_id = r.region_id
+          WHERE r.region_id IS NULL
+        ) invalid_regions
+      samples limit: 20
+      description: Customer, supplier, and warehouse region keys must exist in regions

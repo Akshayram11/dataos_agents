@@ -1,0 +1,125 @@
+kind: dq
+name: fct_daily_sales_dq
+depends_on: silverv1.fct_daily_sales
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 20
+  max_value: null
+  meta:
+    dimension: completeness
+    name: minimum_daily_sales_rows
+    description: Daily sales should contain at least 20 rows from the seed data
+- expectation: expect_column_values_to_not_be_null
+  column: ORDER_DATE
+  meta:
+    dimension: completeness
+    name: no_missing_order_date
+    description: Order date is required
+- expectation: expect_column_values_to_not_be_null
+  column: CUSTOMER_ID
+  meta:
+    dimension: completeness
+    name: no_missing_customer_id
+    description: Customer id is required
+- expectation: expect_column_values_to_be_between
+  column: TOTAL_REVENUE
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: total_revenue_non_negative
+    description: Revenue must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: SHIPMENT_RATE
+  min_value: 0
+  max_value: 1
+  meta:
+    dimension: validity
+    name: shipment_rate_between_zero_and_one
+    description: Shipment rate must be between 0 and 1
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: "SELECT ORDER_DATE, REGION_ID, CUSTOMER_ID, PRODUCT_ID, TOTAL_ORDERS, TOTAL_SHIPMENTS, SHIPMENT_RATE\n\
+    FROM silverv1.fct_daily_sales\nWHERE TOTAL_ORDERS > 0\n  AND ABS(\n    SHIPMENT_RATE - ROUND(\n      CAST(TOTAL_SHIPMENTS\
+    \ AS DECIMAL(18, 4)) / NULLIF(CAST(TOTAL_ORDERS AS DECIMAL(18, 4)), 0),\n      4\n    )\n  ) > 0.0001"
+  meta:
+    dimension: accuracy
+    name: shipment_rate_matches_counts
+    description: Shipment rate should match shipped orders divided by total orders at the daily grain
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: "SELECT ORDER_DATE, REGION_NAME, CATEGORY\nFROM silverv1.fct_daily_sales\nWHERE REGION_NAME NOT IN\
+    \ ('North', 'South', 'East', 'West', 'Central')\n   OR CATEGORY NOT IN ('Widgets', 'Gadgets', 'Doohickeys', 'Thingamajigs')"
+  meta:
+    dimension: conformity
+    name: expected_region_and_category_values
+    description: Daily sales should conform to the expected region and CATEGORY domains
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT ''missing_region_coverage'' AS issue_type
+
+    WHERE (SELECT COUNT(DISTINCT REGION_NAME) FROM silverv1.fct_daily_sales) < 5'
+  meta:
+    dimension: coverage
+    name: all_regions_are_covered
+    description: Daily sales should cover all five business regions
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT ''stale_generated_sales_window'' AS issue_type
+
+    WHERE (SELECT MAX(CAST(ORDER_DATE AS DATE)) FROM silverv1.fct_daily_sales) < DATE ''2020-01-01'''
+  meta:
+    dimension: timeliness
+    name: generated_sales_window_is_current
+    description: Generated daily sales should include data in the expected current analytical window
+- expectation: expect_column_values_to_be_between
+  column: TOTAL_REVENUE
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: total_revenue_non_negative_valid_range
+    description: Revenue must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: SHIPMENT_RATE
+  min_value: 0
+  max_value: 1
+  meta:
+    dimension: validity
+    name: shipment_rate_between_zero_and_one_valid_range
+    description: Shipment rate must be between 0 and 1
+- expectation: expect_column_values_to_not_be_null
+  column: ORDER_DATE
+  meta:
+    name: no_missing_order_dates
+    dimension: completeness
+    description: Daily fact grain requires order date
+- expectation: expect_column_values_to_not_be_null
+  column: CUSTOMER_ID
+  meta:
+    name: no_missing_customer_ids
+    dimension: completeness
+    description: Customer dimension is required
+- expectation: expect_column_values_to_not_be_null
+  column: PRODUCT_ID
+  meta:
+    name: no_missing_product_ids
+    dimension: completeness
+    description: Product dimension is required
+- expectation: expect_column_values_to_not_be_null
+  column: TOTAL_REVENUE
+  meta:
+    name: no_missing_revenue
+    dimension: completeness
+    description: Revenue measure must be present
+- expectation: expect_compound_columns_to_be_unique
+  column_list:
+  - ORDER_DATE
+  - REGION_ID
+  - CUSTOMER_ID
+  - PRODUCT_ID
+  meta:
+    name: unique_daily_sales_grain
+    dimension: uniqueness
+    description: Matches declared model grain
+profiles:
+- REGION_NAME
+- CATEGORY
+- TOTAL_REVENUE
+- SHIPMENT_RATE

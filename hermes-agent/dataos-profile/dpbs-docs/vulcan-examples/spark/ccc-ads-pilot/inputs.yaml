@@ -1,0 +1,34 @@
+- name: '"abfsslhdepotrr"."public"."rcmp_devices_ext"'
+  grains: [device_id]
+  columns:
+    device_id: TEXT
+    equipment_model: TEXT
+    firmware_version: TEXT
+    firmware_release_date: DATE
+    vulnerability_status: TEXT
+    cve_references: TEXT
+    cease_key_date: DATE
+    modernization_status: TEXT
+    assigned_unit: TEXT
+    assigned_custodian: TEXT
+    installation_date: DATE
+    last_audit_date: DATE
+    certification_status: TEXT
+    next_certification_due_date: DATE
+    operational_status: TEXT
+- name: '"abfsslhdepotrr"."public"."comsec_equipment_ext"'
+  grains: [equipment_serial_number]
+  columns:
+    equipment_serial_number: TEXT
+    equipment_type: TEXT
+    classification_level: TEXT
+    assigned_custodian_name: TEXT
+    custodian_ssn: TEXT
+    key_material_expiry_date: DATE
+    last_inspection_date: DATE
+    inspection_due_date: DATE
+    operational_status: TEXT
+    assigned_location: TEXT
+    comsec_account_number: TEXT
+    disposition_authority: TEXT
+    archive_date: DATE

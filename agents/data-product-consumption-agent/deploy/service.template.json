@@ -1,0 +1,59 @@
+{
+  "name": "@@agent_id@@",
+  "version": "v2alpha",
+  "type": "service",
+  "description": "Private MCP-only Data Product Consumption Agent",
+  "tags": ["data-product", "consumption", "agent", "private"],
+  "spec": {
+    "compute": "@@compute@@",
+    "runAsUser": "@@agent_id@@",
+    "stateful": true,
+    "disk": {"size": "1Gi", "type": "disk", "mountPath": "/etc/dataos/persist"},
+    "replicas": 1,
+    "resources": {
+      "requests": {"cpu": "100m", "memory": "192Mi"},
+      "limits": {"cpu": "600m", "memory": "512Mi"}
+    },
+    "http": {
+      "enabled": true,
+      "port": 8080,
+      "path": "/@@agent_id@@",
+      "stripPath": true,
+      "noNetworkAuthorization": true,
+      "ingress": {"enabled": true, "path": "/@@agent_id@@", "stripPath": true}
+    },
+    "envs": {
+      "PORT": "8080",
+      "AGENT_OWNER_ID": "@@operator_id@@",
+      "AGENT_DATAOS_FQDN": "@@host@@",
+      "ARGUSS_MCP_URL": "@@mcp_url@@",
+      "OPENAI_MODEL": "@@model@@",
+      "STATE_FILE": "/etc/dataos/persist/consumption-agent.json",
+      "SECRETS_FILE": "/etc/dataos/persist/consumption-agent-secrets.enc",
+      "MAX_TOOL_ROUNDS": "16",
+      "AGENT_BUILD_ID": "@@build_id@@"
+    },
+    "use": {
+      "projection": {
+        "templateType": "liquid",
+        "projections": {
+          "envVars": [
+            {"key": "DATAOS_RUN_AS_APIKEY", "template": "{{ defaultProjections.dataOsRunAsApikey }}"},
+            {"key": "DATAOS_RUN_AS_USER", "template": "{{ defaultProjections.dataOsRunAsUser }}"},
+            {"key": "DATAOS_FQDN", "template": "{{ defaultProjections.dataOsFqdn }}"},
+            {"key": "DATAOS_TENANT_ID", "template": "{{ defaultProjections.dataOsTenantId }}"}
+          ]
+        }
+      }
+    },
+    "stack": "container:1.0",
+    "stackSpec": {
+      "image": "@@main_image@@",
+      "command": ["/bin/bash", "-c"],
+      "arguments": [
+        "set +x\nset -euo pipefail\numask 077\nexport PORT='8080'\nexport AGENT_OWNER_ID='@@operator_id@@'\nexport AGENT_DATAOS_FQDN='@@host@@'\nexport ARGUSS_MCP_URL='@@mcp_url@@'\nexport OPENAI_MODEL='@@model@@'\nexport STATE_FILE='/etc/dataos/persist/consumption-agent.json'\nexport SECRETS_FILE='/etc/dataos/persist/consumption-agent-secrets.enc'\nexport MAX_TOOL_ROUNDS='16'\nmkdir -p /etc/dataos/work/agent\n@@RUNTIME_FILES@@\nexec node /etc/dataos/work/agent/server.mjs\n"
+      ]
+    },
+    "servicePorts": [{"name": "http", "port": 8080}]
+  }
+}

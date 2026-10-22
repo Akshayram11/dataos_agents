@@ -1,0 +1,60 @@
+{
+  "name": "@@agent_id@@",
+  "version": "v2alpha",
+  "type": "service",
+  "description": "Private always-on DataOS operations observer",
+  "tags": ["operations", "observer", "private"],
+  "spec": {
+    "compute": "@@compute@@",
+    "runAsUser": "@@agent_id@@",
+    "stateful": true,
+    "volumes": [{"id": "@@state_volume@@", "directory": "/etc/dataos/persist"}],
+    "replicas": 1,
+    "resources": {
+      "requests": {"cpu": "100m", "memory": "192Mi"},
+      "limits": {"cpu": "500m", "memory": "512Mi"}
+    },
+    "http": {
+      "enabled": true,
+      "port": 8080,
+      "path": "/@@agent_id@@",
+      "stripPath": true,
+      "noNetworkAuthorization": true,
+      "ingress": {"enabled": true, "path": "/@@agent_id@@", "stripPath": true}
+    },
+    "envs": {
+      "PORT": "8080",
+      "OBSERVER_OWNER_ID": "@@operator_id@@",
+      "POLL_INTERVAL_SECONDS": "@@poll_interval_seconds@@",
+      "PENDING_THRESHOLD_SECONDS": "@@pending_threshold_seconds@@",
+      "RESOURCE_TYPES": "@@resource_types_csv@@",
+      "STATE_FILE": "/etc/dataos/persist/observer.json",
+      "MODEL_KEY_FILE": "/etc/dataos/persist/openai-key.enc",
+      "DIAGNOSTIC_SKILL_FILE": "/etc/dataos/work/observer/skills/dataos-cli-diagnostics/SKILL.md",
+      "OPENAI_MODEL": "@@model@@",
+      "OBSERVER_BUILD_ID": "@@build_id@@"
+    },
+    "use": {
+      "projection": {
+        "templateType": "liquid",
+        "projections": {
+          "envVars": [
+            {"key": "DATAOS_RUN_AS_APIKEY", "template": "{{ defaultProjections.dataOsRunAsApikey }}"},
+            {"key": "DATAOS_RUN_AS_USER", "template": "{{ defaultProjections.dataOsRunAsUser }}"},
+            {"key": "DATAOS_FQDN", "template": "{{ defaultProjections.dataOsFqdn }}"},
+            {"key": "DATAOS_TENANT_ID", "template": "{{ defaultProjections.dataOsTenantId }}"}
+          ]
+        }
+      }
+    },
+    "stack": "container:1.0",
+    "stackSpec": {
+      "image": "@@main_image@@",
+      "command": ["/bin/bash", "-c"],
+      "arguments": [
+        "set +x\nset -euo pipefail\numask 077\nexport OBSERVER_OWNER_ID='@@operator_id@@'\nexport POLL_INTERVAL_SECONDS='@@poll_interval_seconds@@'\nexport PENDING_THRESHOLD_SECONDS='@@pending_threshold_seconds@@'\nexport RESOURCE_TYPES='@@resource_types_csv@@'\nexport OPENAI_MODEL='@@model@@'\nmkdir -p /etc/dataos/work/observer /etc/dataos/work/state\n@@RUNTIME_FILES@@\nexec node /etc/dataos/work/observer/server.mjs\n"
+      ]
+    },
+    "servicePorts": [{"name": "http", "port": 8080}]
+  }
+}

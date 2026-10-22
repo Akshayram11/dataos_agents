@@ -1,0 +1,20 @@
+{
+  "name": "@@agent_id@@-ui",
+  "version": "v1alpha",
+  "type": "link",
+  "title": "Always-on Agent",
+  "description": "Private always-on DataOS agent factory and operations workspace",
+  "owner": "@@operator_id@@",
+  "tags": ["agent", "dataos", "private", "always-on"],
+  "spec": {
+    "runAsUser": "@@operator_id@@",
+    "link": {
+      "title": "Open Always-on Agent",
+      "description": "Build and operate scoped DataOS agents through verified MCP tools.",
+      "domain": "agent-platform",
+      "owners": ["@@operator_id@@"],
+      "tags": ["agent", "dataos", "private", "always-on"],
+      "url": "https://@@host@@/@@agent_id@@/"
+    }
+  }
+}

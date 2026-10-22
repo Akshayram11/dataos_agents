@@ -1,0 +1,67 @@
+kind: dq
+name: fct_weekly_sales_dq
+depends_on: silverv2.fct_weekly_sales
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: weekly_sales_has_rows
+    description: Weekly sales should produce aggregated rows
+- expectation: expect_column_values_to_not_be_null
+  column: week_start_date
+  meta:
+    dimension: completeness
+    name: no_missing_week_start_date
+    description: Week start date is required
+- expectation: expect_column_values_to_be_between
+  column: total_weekly_revenue
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: weekly_revenue_non_negative
+    description: Weekly revenue must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: active_customers
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: active_customers_non_negative
+    description: Active customer count must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: total_weekly_revenue
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: weekly_revenue_non_negative_valid_range
+    description: Weekly revenue must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: active_customers
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: active_customers_non_negative_valid_range
+    description: Active customer count must be non-negative
+- expectation: expect_column_values_to_not_be_null
+  column: week_start_date
+  meta:
+    name: no_missing_week_start
+    dimension: completeness
+    description: Weekly fact grain requires week start
+- expectation: expect_column_values_to_not_be_null
+  column: total_weekly_revenue
+  meta:
+    name: no_missing_revenue
+    dimension: completeness
+    description: Weekly revenue measure must be present
+profiles:
+- week_start_date
+- region_name
+- category
+- total_weekly_revenue
+- active_customers

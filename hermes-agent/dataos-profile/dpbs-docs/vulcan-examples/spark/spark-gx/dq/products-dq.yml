@@ -1,0 +1,140 @@
+kind: dq
+name: products_dq
+depends_on: s3lhdepotrr.bronze_sparkv.products
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: catalog_has_products
+- expectation: expect_column_values_to_be_in_set
+  column: category
+  value_set:
+  - Widgets
+  - Gadgets
+  - Doohickeys
+  - Thingamajigs
+  meta:
+    dimension: validity
+    name: valid_category_values
+    description: Checklist — invalid_percent with valid values
+- expectation: expect_column_values_to_be_between
+  column: price
+  min_value: 0
+  max_value: 100000
+  meta:
+    dimension: validity
+    name: price_in_valid_range
+    description: Checklist — valid min and valid max
+- expectation: expect_column_values_to_match_regex
+  column: category
+  regex: ^[A-Za-z]+$
+  meta:
+    dimension: validity
+    name: category_valid_regex
+    description: Checklist — valid regex on category token
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT category, COUNT(*) AS cnt
+
+    FROM s3lhdepotrr.bronze_sparkv.products
+
+    GROUP BY category
+
+    HAVING COUNT(*) = 0'
+  meta:
+    dimension: conformity
+    name: category_distribution_mix
+    description: Checklist — distribution-style mix (each category must appear)
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT category
+
+    FROM s3lhdepotrr.bronze_sparkv.products
+
+    WHERE category NOT IN (''Widgets'', ''Gadgets'', ''Doohickeys'', ''Thingamajigs'')'
+  meta:
+    dimension: conformity
+    name: category_distribution_difference_proxy
+    description: Checklist — distribution_difference proxy vs allowed set
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: "SELECT column_name\nFROM information_schema.columns\nWHERE table_schema = 'bronze_sparkv' AND table_name\
+    \ = 'products'\n  AND column_name = '__unexpected_column__'"
+  meta:
+    dimension: conformity
+    name: schema_evolution_stand_in
+    description: Checklist — schema evolution stand-in (no unexpected column)
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: 1000000
+  meta:
+    dimension: completeness
+    name: intentional_fail_catalog_size
+    description: Checklist — catalog size within seed bounds (pass)
+- expectation: expect_column_values_to_be_in_set
+  column: category
+  value_set:
+  - Widgets
+  - Gadgets
+  - Doohickeys
+  - Thingamajigs
+  meta:
+    dimension: validity
+    name: valid_category_values_valid_values
+    description: Checklist — invalid_percent with valid values
+- expectation: expect_column_values_to_be_between
+  column: price
+  min_value: 0
+  max_value: 100000
+  meta:
+    dimension: validity
+    name: price_in_valid_range_valid_range
+    description: Checklist — valid min and valid max
+- expectation: expect_column_values_to_match_regex
+  column: category
+  regex: ^[A-Za-z]+$
+  meta:
+    dimension: validity
+    name: category_valid_regex_valid_regex
+    description: Checklist — valid regex on category token
+- expectation: expect_column_values_to_not_be_null
+  column: product_id
+  meta:
+    name: no_missing_product_ids
+    dimension: completeness
+    description: Product grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: supplier_id
+  meta:
+    name: no_missing_supplier_ids
+    dimension: completeness
+    description: Every product references a supplier
+- expectation: expect_column_values_to_not_be_null
+  column: price
+  meta:
+    name: no_missing_prices
+    dimension: completeness
+    description: List price is required
+- expectation: expect_column_values_to_be_unique
+  column: product_id
+  meta:
+    name: unique_product_ids
+    dimension: uniqueness
+    description: Product ID is the table grain
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT p.product_id, p.supplier_id
+
+    FROM {batch} AS p
+
+    LEFT JOIN s3lhdepotrr.bronze_sparkv.suppliers AS s ON p.supplier_id = s.supplier_id
+
+    WHERE s.supplier_id IS NULL
+
+    '
+  meta:
+    name: products_have_valid_suppliers
+    dimension: consistency
+    description: Every product must reference an existing supplier
+profiles:
+- category
+- price
+- name

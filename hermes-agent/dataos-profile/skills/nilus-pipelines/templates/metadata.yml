@@ -1,0 +1,24 @@
+name: fabric-meta-prefix
+version: v1alpha
+type: nilus
+description: Metadata pipeline — catalog only, no sink
+spec:
+  type: metadata
+  mode: deep
+  compute: runnable
+  use:
+    projection:
+      secrets:
+        - id: maximus:nilus-fabric-secret
+          contextAlias: fabricsecret
+      projections:
+        envVars:
+          - key: FABRIC_CLIENT_ID
+            template: "{{ secrets['fabricsecret'].CLIENT_ID | base64_decode }}"
+          - key: FABRIC_CLIENT_SECRET
+            template: "{{ secrets['fabricsecret'].CLIENT_SECRET | base64_decode }}"
+  source:
+    address: metadata+fabric://{FABRIC_CLIENT_ID}:{FABRIC_CLIENT_SECRET}@host:1433/Warehouse?tenant_id=…
+    options:
+      service_type: fabric
+      threads: 3

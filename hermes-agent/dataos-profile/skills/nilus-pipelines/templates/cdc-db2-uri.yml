@@ -1,0 +1,39 @@
+name: cdc-db2-uri
+version: v1alpha
+type: nilus
+tags: [service, nilus-cdc]
+description: CDC from a DB2 URI (no DB2 depot) into a Postgres depot
+spec:
+  type: cdc
+  compute: runnable
+  logLevel: INFO
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  use:
+    projection:
+      secrets:
+        - id: workspace:db2-secret
+          contextAlias: db2secret
+      projections:
+        envVars:
+          - key: DB2_USER
+            template: "{{ secrets['db2secret'].username | base64_decode }}"
+          - key: DB2_PASSWORD
+            template: "{{ secrets['db2secret'].password | base64_decode }}"
+  source:
+    address: db2://{DB2_USER}:{DB2_PASSWORD}@db2.example.com:50000/SAMPLEDB
+    options:
+      strategy: flatten
+    cdc:
+      table.include.list: "DB2INST1.CDC_TEST"
+      topic.prefix: "cdc12db2"
+  sink:
+    address: dataos://cdc12pgdepot?purpose=rw
+    options:
+      dest_table: nilus_cdc_sink
+      incremental_strategy: append

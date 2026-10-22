@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DataOS Agent Project",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["project_name", "summary", "files", "resources", "deploy_order", "verification"],
+  "properties": {
+    "project_name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{2,62}$"},
+    "summary": {"type": "string", "minLength": 1},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "content"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^(README\\.md|skills/[a-z0-9-]+/SKILL\\.md|runtime/[A-Za-z0-9._/-]+)$"},
+          "content": {"type": "string"}
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["identifier", "manifest"],
+        "properties": {
+          "identifier": {"type": "string"},
+          "manifest": {"type": "object"}
+        }
+      }
+    },
+    "deploy_order": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "verification": {"type": "array", "items": {"type": "string"}}
+  }
+}
+

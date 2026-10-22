@@ -1,0 +1,225 @@
+kind: dq
+name: customers_dq
+depends_on: bronzev1.customers
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+- expectation: expect_table_row_count_to_be_between
+  min_value: 5
+  max_value: 100000
+  meta:
+    dimension: completeness
+    name: row_count_in_accepted_range
+    description: Checklist — row_count between
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: row_count_with_warn_threshold
+    description: Checklist — intentional WARN (seed volume is below 1M rows)
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: 1000000
+  meta:
+    dimension: completeness
+    name: intentional_fail_impossible_row_count
+    description: Checklist — seed row count within expected bounds (pass on harness data)
+- expectation: expect_column_values_to_not_be_null
+  column: email
+  meta:
+    dimension: completeness
+    name: no_missing_emails
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: |
+    SELECT 'optional_note_missing_percent_too_high' AS violation
+    WHERE COALESCE(
+      (SELECT 100.0 * SUM(CASE WHEN optional_note IS NULL THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0)
+       FROM {batch}),
+      100
+    ) >= 60
+  meta:
+    dimension: completeness
+    name: optional_note_missing_percent
+    description: Checklist — missing_percent(optional_note) < 60 (Soda-aligned)
+- expectation: expect_column_values_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_emails
+  column: email
+- expectation: expect_column_values_to_be_unique
+  column: email
+  meta:
+    dimension: uniqueness
+    name: duplicate_percent_emails
+    description: Checklist — duplicate_percent
+- expectation: expect_compound_columns_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: composite_grain_unique
+    description: Checklist — composite duplicate_count
+  column_list:
+  - customer_id
+  - signup_date
+- expectation: expect_column_values_to_match_regex
+  column: email
+  regex: ^[a-zA-ZÀ-ÿĀ-ſƀ-ȳ0-9.\-_%+]+@[a-zA-ZÀ-ÿĀ-ſƀ-ȳ0-9.\-_%]+\.[A-Za-z]{2,4}$
+  meta:
+    dimension: validity
+    name: email_valid_format
+    description: Checklist — valid format email
+- expectation: expect_column_values_to_be_between
+  column: customer_id
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: validity
+    name: invalid_percent_customer_id
+    description: Checklist — invalid_percent with valid min
+- expectation: expect_column_values_to_not_be_null
+  column: region_id
+  meta:
+    dimension: coverage
+    name: coverage_region_id_present
+    description: Checklist — coverage-classified completeness rule
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT customer_id, email
+
+    FROM bronzev1.customers
+
+    WHERE email NOT LIKE ''%@%'''
+  meta:
+    dimension: validity
+    name: email_not_like_at_pattern
+    description: Checklist — failed rows email NOT LIKE pattern (should pass on seed)
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT customer_id, email
+
+    FROM bronzev1.customers
+
+    WHERE 1 = 0'
+  meta:
+    dimension: validity
+    name: intentional_fail_always_returns_rows
+    description: Checklist — failed rows harness (no rows on seed; pass)
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: row_count_warn_and_fail_combined
+    description: Checklist — warn and fail on same row_count rule
+- expectation: expect_column_values_to_not_be_null
+  column: email
+  meta:
+    dimension: completeness
+    name: missing_count_less_than_threshold
+    description: Checklist — missing_count(column) < value
+- expectation: expect_column_values_to_not_be_null
+  column: email
+  meta:
+    dimension: completeness
+    name: missing_percent_zero
+    description: Checklist — missing_percent = 0
+- expectation: expect_column_values_to_be_unique
+  column: email
+  meta:
+    dimension: uniqueness
+    name: duplicate_percent_less_than_one
+- expectation: expect_column_values_to_be_unique
+  column: email
+  meta:
+    dimension: uniqueness
+    name: duplicate_percent_greater_than_five
+    description: Checklist — duplicate share within 5% (pass on seed)
+- expectation: expect_table_row_count_to_be_between
+  min_value: null
+  max_value: 1000000
+  meta:
+    dimension: completeness
+    name: row_count_less_or_equal
+- expectation: expect_table_row_count_to_be_between
+  min_value: null
+  max_value: 999999
+  meta:
+    dimension: completeness
+    name: row_count_strictly_less
+- expectation: expect_column_value_lengths_to_be_between
+  column: email
+  min_value: 5
+  max_value: 255
+  meta:
+    name: email_min_length
+    dimension: validity
+    description: Checklist — min_length (GX supplement for Soda parity)
+- expectation: expect_column_value_lengths_to_be_between
+  column: email
+  min_value: 5
+  max_value: 255
+  meta:
+    name: email_max_length
+    dimension: validity
+    description: Checklist — max_length (GX supplement)
+- expectation: expect_column_value_lengths_to_be_between
+  column: email
+  min_value: 5
+  max_value: 255
+  meta:
+    name: email_min_length_equality
+    dimension: validity
+    description: Checklist — min_length threshold (GX supplement)
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: |
+    SELECT 'name_avg_length_below_threshold' AS violation
+    WHERE COALESCE((SELECT avg(length(name)) FROM {batch}), 0) <= 2.01
+  meta:
+    name: name_avg_length
+    dimension: validity
+    description: Checklist — avg_length (Soda avg_length(name) > 2)
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    name: valid_email_count
+    dimension: validity
+    description: Checklist — valid_count proxy (non-empty table with emails)
+- expectation: expect_column_values_to_match_regex
+  column: email
+  regex: ^[a-zA-ZÀ-ÿĀ-ſƀ-ȳ0-9.\-_%+]+@[a-zA-ZÀ-ÿĀ-ſƀ-ȳ0-9.\-_%]+\.[A-Za-z]{2,4}$
+  meta:
+    dimension: validity
+    name: email_valid_format_valid_format
+    description: Checklist — valid format email
+- expectation: expect_column_values_to_be_between
+  column: customer_id
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: validity
+    name: invalid_percent_customer_id_valid_range
+    description: Checklist — invalid_percent with valid min
+- expectation: expect_column_values_to_not_be_null
+  column: customer_id
+  meta:
+    name: no_missing_customer_ids
+    dimension: completeness
+    description: Customer grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: signup_date
+  meta:
+    name: no_missing_signup_dates
+    dimension: completeness
+    description: Signup date is required for cohort analysis
+- expectation: expect_column_values_to_be_unique
+  column: customer_id
+  meta:
+    name: unique_customer_ids
+    dimension: uniqueness
+    description: Customer ID is the table grain
+profiles:
+- email
+- signup_date
+- optional_note

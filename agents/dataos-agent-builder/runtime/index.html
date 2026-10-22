@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DataOS Agent Builder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="mark">AB</div><div><h1>DataOS Agent Builder</h1><p id="identity">engineering · private</p></div></div>
+    <div class="top-actions"><span id="ready" class="status">Not connected</span><button id="connections" class="button">Connections</button><button id="reset" class="button ghost">New agent</button></div>
+  </header>
+  <main>
+    <aside class="rail">
+      <span class="eyebrow">GOVERNED BUILD WORKFLOW</span>
+      <h2>From intent to a verified agent.</h2>
+      <p>Requirements, architecture and security are agreed before anything is generated or deployed.</p>
+      <ol class="steps">
+        <li id="step-discovery" class="active"><b>01</b><span><strong>Discover</strong><small>Outcome and boundaries</small></span></li>
+        <li id="step-prd"><b>02</b><span><strong>Approve PRD</strong><small>Architecture and controls</small></span></li>
+        <li id="step-generate"><b>03</b><span><strong>Generate</strong><small>Artifacts and lint</small></span></li>
+        <li id="step-deploy"><b>04</b><span><strong>Deploy</strong><small>Apply and verify</small></span></li>
+      </ol>
+      <div class="boundary"><strong>Server-enforced boundary</strong><span id="tool-count">0 read-only planning tools</span><span>No delete · no IAM · no secret reads</span></div>
+      <div class="meter"><span>SESSION USAGE</span><strong id="cost">$0.000000</strong><small id="tokens">0 requests · 0 tokens</small></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="workspace-head">
+        <div><span class="eyebrow">PRIVATE AGENT STUDIO</span><h2>What teammate should we build?</h2><p>Describe the outcome. The builder will ask only the missing questions and verify platform facts.</p></div>
+        <button id="generate-prd" class="button primary">Generate PRD</button>
+      </div>
+      <div id="messages" class="messages">
+        <div id="welcome" class="welcome">
+          <span>Start with the outcome, not the implementation.</span>
+          <h3>“Build a private agent that…”</h3>
+          <p>Include who will use it and what success looks like. Credentials are entered only through Connections.</p>
+          <div class="starters">
+            <button data-prompt="Build a private read-only agent that helps engineering users discover, inspect and query governed data products.">Data product assistant</button>
+            <button data-prompt="Build an always-on private operations teammate that monitors DataOS resources and explains failures without changing them.">Operations teammate</button>
+            <button data-prompt="Build a scheduled agent that reviews data quality and publishes a concise daily action list for the owner.">Quality reviewer</button>
+          </div>
+        </div>
+      </div>
+      <form id="composer">
+        <textarea id="prompt" maxlength="8000" placeholder="Describe the agent outcome, users and boundaries…"></textarea>
+        <button id="send" aria-label="Send message">Send</button>
+        <small>Planning is read-only. PRD approval and deployment are separate actions.</small>
+      </form>
+    </section>
+
+    <aside class="artifact-panel">
+      <div class="artifact-head"><span class="eyebrow">BUILD RECORD</span><h2 id="artifact-title">No PRD yet</h2><span id="artifact-status" class="pill">Discovery</span></div>
+      <div id="artifact-empty" class="artifact-empty"><b>PRD first.</b><p>The approved document becomes the immutable input to generation.</p></div>
+      <pre id="prd" class="document" hidden></pre>
+      <div id="artifact-actions" class="artifact-actions" hidden>
+        <button id="approve-prd" class="button primary">Approve this PRD</button>
+        <button id="generate-project" class="button primary" hidden>Generate + lint artifacts</button>
+      </div>
+      <div id="project" class="project" hidden></div>
+      <div id="deploy-box" class="deploy-box" hidden>
+        <label for="confirmation">Deployment confirmation</label>
+        <input id="confirmation" autocomplete="off">
+        <button id="deploy" class="button danger">Deploy approved revision</button>
+        <small>Writes use your scoped DataOS key. Destructive tools remain unavailable.</small>
+      </div>
+      <pre id="deployment" class="deployment" hidden></pre>
+    </aside>
+  </main>
+
+  <dialog id="connection-dialog">
+    <form method="dialog">
+      <button class="close" value="cancel" aria-label="Close">×</button>
+      <span class="eyebrow">PRIVATE CONNECTIONS</span><h2>Connect your own keys</h2>
+      <p>Keys are validated, encrypted with this application runtime identity and never returned to the browser.</p>
+      <label>DataOS API key<input id="dataos-key" type="password" autocomplete="off"></label>
+      <small>Used by the local dataos-ctl MCP for this tenant.</small>
+      <label>OpenAI API key<input id="openai-key" type="password" autocomplete="off"></label>
+      <small>Used for <span id="model-name">gpt-5.6-luna</span>. Platform evidence needed for answers may be sent to OpenAI.</small>
+      <p id="connection-error" class="error"></p>
+      <button id="save-keys" class="button primary full" type="button">Validate and save keys</button>
+    </form>
+  </dialog>
+  <script src="app.js" defer></script>
+</body>
+</html>

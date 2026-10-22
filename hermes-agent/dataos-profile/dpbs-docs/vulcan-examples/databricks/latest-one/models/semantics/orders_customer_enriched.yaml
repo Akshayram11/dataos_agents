@@ -1,0 +1,264 @@
+kind: semantic
+name: customer_orders_enriched
+depends_on: sales3.customer_orders_enriched
+description: Customer orders enriched fact table (semantic layer)
+
+dimensions:
+  # string types
+  - total_spent
+  - name: record_id
+    behavior:
+      type: identifier
+  - name: customer_id
+    behavior:
+      type: identifier
+  - name: order_id
+    behavior:
+      type: identifier
+  - name: product_id
+    behavior:
+      type: identifier
+  - full_name
+  - name: return_reason
+    behavior:
+      type: categorical
+  - name: preferred_language
+    behavior:
+      type: categorical
+  - name: device_type
+    behavior:
+      type: categorical
+  - name: browser
+    behavior:
+      type: categorical
+  - ip_address
+  - name: country
+    description: Country of the customer associated with the order
+    behavior:
+      type: categorical
+    tags:
+      - geography
+      - customer
+      - region
+    terms:
+      - customer.country
+      - geography.region
+  - name: currency_code
+    behavior:
+      type: categorical
+  - name: loyalty_tier
+    description: Customer loyalty tier level (e.g. Gold, Silver, Bronze)
+    behavior:
+      type: categorical
+    tags:
+      - loyalty
+      - customer
+      - segment
+    terms:
+      - customer.loyalty_tier
+      - segment.loyalty
+  - feedback_comment
+  - json_metadata
+  - array_tags
+  - geo_location
+  - conversion_rate
+
+  # NUMBER types
+  - age
+  - order_year
+  - order_month
+  - order_day
+  - total_orders
+
+  - days_since_last_order
+  - credit_score
+  - feedback_rating
+
+  # BOOLEAN types
+  - is_active
+  - is_returned
+  - is_subscribed
+  - is_fraud
+
+  #time types
+  - name: signup_timestamp
+    description: Precise timestamp when the customer signed up
+    tags:
+      - temporal
+      - acquisition
+      - timestamp
+    terms:
+      - customer.signup_timestamp
+      - temporal.registration
+    # granularities:
+    #   - name: hour
+    #     interval: 1 hour
+    #   - name: day
+    #     interval: 1 day
+    #   - name: week
+    #     interval: 1 week
+    #   - name: month
+    #     interval: 1 month
+  - discount_percent
+
+    
+
+measures:
+  - name: m_type_string
+    type: string
+    expression: "case when count({customer_orders_enriched.conversion_rate}) > 0 then 'conversion' else 'no conversion' end"
+    description: String-typed measure flagging conversion presence
+    tags:
+      - conversion
+      - string
+      - metric
+    terms:
+      - conversion.flag
+      - metric.conversion_string
+
+  - name: m_type_time
+    type: time
+    expression: "max({customer_orders_enriched.signup_timestamp})"
+    description: Most recent signup timestamp
+    tags:
+      - temporal
+      - acquisition
+      - metric
+    terms:
+      - customer.latest_signup
+      - temporal.max_signup
+
+  - name: m_type_bool
+    type: boolean
+    expression: "case when count({customer_orders_enriched.conversion_rate}) > 0 then true else false end"
+    description: Boolean-typed measure indicating conversion presence
+    tags:
+      - conversion
+      - boolean
+      - metric
+    terms:
+      - conversion.bool
+      - metric.has_conversion
+
+  - name: m_type_number
+    type: number
+    expression: "avg({customer_orders_enriched.credit_score})"
+    description: Average customer credit score
+    tags:
+      - credit
+      - average
+      - metric
+    terms:
+      - customer.avg_credit_score
+      - finance.credit_score
+
+  - name: m_count_distinct
+    type: count_distinct
+    expression: "{customer_orders_enriched.customer_id}"
+    description: Distinct customers
+    behavior:
+      type: simple
+    tags:
+      - customer
+      - count
+      - metric
+    terms:
+      - customer.distinct_count
+      - metric.unique_customers
+
+  - name: m_count
+    type: count
+    expression: "{customer_orders_enriched.order_id}"
+    description: Total order records
+    behavior:
+      type: simple
+    tags:
+      - order
+      - count
+      - metric
+    terms:
+      - order.record_count
+      - metric.order_count
+
+  - name: total_orders_metric
+    type: sum
+    expression: "{customer_orders_enriched.total_orders}"
+    description: Total orders summed across customers
+    behavior:
+      type: flow
+    tags:
+      - order
+      - volume
+      - metric
+    terms:
+      - order.total_orders
+      - sales3.order_volume
+
+  - name: avg_orders_per_customer
+    type: avg
+    expression: "{customer_orders_enriched.total_orders}"
+    description: Average number of orders per customer
+    tags:
+      - order
+      - average
+      - metric
+    terms:
+      - order.avg_per_customer
+      - customer.order_frequency
+
+  - name: max_credit_score
+    type: max
+    expression: "{customer_orders_enriched.credit_score}"
+    description: Highest customer credit score
+    tags:
+      - credit
+      - max
+      - metric
+    terms:
+      - customer.max_credit_score
+      - finance.highest_credit
+
+  - name: min_credit_score
+    type: min
+    expression: "{customer_orders_enriched.credit_score}"
+    description: Lowest customer credit score
+    tags:
+      - credit
+      - min
+      - metric
+    terms:
+      - customer.min_credit_score
+      - finance.lowest_credit
+
+  # - name: m_currency_format
+  #   type: sum
+  #   expression: "{customer_orders_enriched.total_spent}"
+  #   format: currency
+  #   description: Total amount spent, formatted as currency
+  #   behavior:
+  #     type: flow
+  #   tags:
+  #     - revenue
+  #     - financial
+  #     - metric
+  #   terms:
+  #     - customer.total_spent
+  #     - revenue.customer_spend
+
+  # - name: m_percent_format
+  #   type: avg
+  #   expression: "1.0 * {customer_orders_enriched.discount_percent}"
+  #   format: percent
+  #   description: Average discount percent, formatted as a percentage
+  #   tags:
+  #     - discount
+  #     - average
+  #     - metric
+  #   terms:
+  #     - pricing.avg_discount_percent
+  #     - discount.average
+
+joins:
+  - name: orders
+    type: many_to_one
+    expression: "{customer_orders_enriched.order_id} = {orders.order_id}"

@@ -1,0 +1,20 @@
+name: mongo-cdc-lh
+version: v1alpha
+type: nilus
+tags: [service, nilus-cdc]
+spec:
+  type: cdc
+  compute: runnable
+  source:
+    address: dataos://lhmongodepot?purpose=rw
+    options:
+      strategy: flatten
+    cdc:
+      collection.include.list: "retail.lhcdctest"
+      topic.prefix: "lhmongocdc"
+      snapshot.mode: "no_data"
+  sink:
+    address: dataos://testawslh?purpose=rw
+    options:
+      dest_table: mongo_cdc_lh
+      incremental_strategy: append

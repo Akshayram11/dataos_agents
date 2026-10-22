@@ -1,0 +1,235 @@
+kind: semantic
+name: orders
+depends_on: lenovo.sales.orders
+description: Orders fact table (semantic layer)
+
+dimensions:
+  - name: ORDER_DATE
+    description: Date the order was placed (used for time-series analysis)
+    tags:
+      - temporal
+      - order
+      - date
+    terms:
+      - order.order_date
+      - temporal.transaction_date
+  - name: ORDER_DATE_TIMESTAMP
+    description: Precise timestamp of the order placement
+    tags:
+      - temporal
+      - order
+      - timestamp
+    terms:
+      - order.order_timestamp
+      - temporal.transaction_timestamp
+    granularities:
+      - name: hour
+        interval: 1 hour
+      - name: day
+        interval: 1 day
+      - name: week
+        interval: 1 week
+      - name: month
+        interval: 1 month
+  - name: CUSTOMER_ID
+    behavior:
+      type: identifier
+  - name: PRODUCT_ID
+    behavior:
+      type: identifier
+  - QUANTITY
+  - DISCOUNT
+  - TOTAL_AMOUNT
+  - name: ORDER_ID
+    behavior:
+      type: identifier
+    public: true
+  - UNIT_PRICE
+  - TAX
+  - SHIPPING_COST
+
+measures:
+  - name: TOTAL_ORDERS
+    type: count_distinct
+    expression: "{orders.ORDER_ID}"
+    description: Total distinct orders placed
+    behavior:
+      type: simple
+    tags:
+      - order
+      - count
+      - metric
+    terms:
+      - order.total_orders
+      - sales1.order_count
+
+  - name: ROLLING_7D_ORDERS
+    type: count_distinct
+    expression: "{orders.ORDER_ID}"
+    description: Distinct orders over the trailing 7 days
+    rolling_window:
+      trailing: "7 days"
+      leading: unbounded
+      offset: end
+    behavior:
+      type: simple
+    tags:
+      - order
+      - rolling
+      - metric
+    terms:
+      - order.rolling_7d_orders
+      - sales1.trailing_orders
+
+  - name: TOTAL_REVENUE
+    type: sum
+    expression: "{orders.TOTAL_AMOUNT}"
+    description: Total revenue from all orders
+    behavior:
+      type: flow
+    tags:
+      - revenue
+      - financial
+      - metric
+    terms:
+      - revenue.total_revenue
+      - sales1.gross_revenue
+
+  - name: ROLLING_30D_REVENUE
+    type: sum
+    expression: "{orders.TOTAL_AMOUNT}"
+    description: Revenue over the trailing 30 days
+    rolling_window:
+      trailing: "30 days"
+      leading: unbounded
+      offset: end
+    behavior:
+      type: flow
+    tags:
+      - revenue
+      - rolling
+      - metric
+    terms:
+      - revenue.rolling_30d
+      - sales1.trailing_revenue
+
+  - name: AVERAGE_ORDER_VALUE
+    type: avg
+    expression: "{orders.TOTAL_AMOUNT}"
+    description: Average value per order
+    tags:
+      - revenue
+      - average
+      - metric
+    terms:
+      - revenue.average_order_value
+      - sales1.aov
+
+  - name: TOTAL_QUANTITY_SOLD
+    type: sum
+    expression: "{orders.QUANTITY}"
+    description: Total units sold across all orders
+    behavior:
+      type: flow
+    tags:
+      - quantity
+      - volume
+      - metric
+    terms:
+      - sales1.total_quantity
+      - product.units_sold
+
+  - name: ROLLING_90D_QUANTITY_SOLD
+    type: sum
+    expression: "{orders.QUANTITY}"
+    description: Units sold over the trailing 90 days
+    rolling_window:
+      trailing: "90 days"
+      leading: unbounded
+      offset: end
+    behavior:
+      type: flow
+    tags:
+      - quantity
+      - rolling
+      - metric
+    terms:
+      - sales1.rolling_quantity
+      - product.trailing_quantity
+
+  - name: TOTAL_DISCOUNT_AMOUNT
+    type: sum
+    expression: "{orders.UNIT_PRICE} * {orders.QUANTITY} * {orders.DISCOUNT}"
+    description: Total discount amount applied across orders
+    behavior:
+      type: flow
+    tags:
+      - discount
+      - financial
+      - metric
+    terms:
+      - revenue.total_discount
+      - pricing.discount_amount
+
+  - name: TOTAL_TAX_COLLECTED
+    type: sum
+    expression: "{orders.TAX}"
+    description: Total tax collected across all orders
+    behavior:
+      type: flow
+    tags:
+      - tax
+      - financial
+      - metric
+    terms:
+      - finance.total_tax
+      - revenue.tax_collected
+
+  - name: TOTAL_SHIPPING_COST
+    type: sum
+    expression: "{orders.SHIPPING_COST}"
+    description: Total shipping cost across all orders
+    behavior:
+      type: flow
+    tags:
+      - shipping
+      - financial
+      - metric
+    terms:
+      - finance.total_shipping
+      - logistics.shipping_cost
+
+segments:
+  # - name: recent_orders
+  #   expression: "{orders.ORDER_DATE} >= CURRENT_DATE - INTERVAL '7 days'"
+
+  - name: high_value_orders
+    expression: "{orders.TOTAL_AMOUNT} >= 500"
+    description: Orders with a total amount of at least $500
+    tags:
+      - revenue
+      - segment
+      - high_value
+    terms:
+      - order.high_value
+      - revenue.large_orders
+
+  - name: discounted_orders
+    expression: "{orders.DISCOUNT} > 0"
+    description: Orders that received a discount
+    tags:
+      - discount
+      - segment
+      - promotion
+    terms:
+      - order.discounted
+      - pricing.promotional_orders
+
+joins:
+  - name: customer
+    type: many_to_one
+    expression: "{orders.CUSTOMER_ID} = {customer.CUSTOMER_ID}"
+
+  - name: products
+    type: many_to_one
+    expression: "{orders.PRODUCT_ID} = {products.PRODUCT_ID}"

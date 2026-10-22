@@ -1,0 +1,37 @@
+test_sales_customers_single:
+  model: sales3.customers
+  description: >
+    Full-output test for the Customers model using a single input record.
+
+  inputs:
+    raw.raw_customers:
+      rows:
+        - customer_id: c100
+          first_name: Alice
+          last_name: Johnson
+          email: alice.johnson@example.com
+          phone: "555-9999"
+          address_line1: "10 Market St"
+          address_line2: "Suite 200"
+          city: "Denver"
+          state: "co"
+          postal_code: "80205"
+          customer_segment: "Retail"
+          account_status: "Active"
+          signup_date: 2022-01-15
+          loyalty_score: 55
+
+  outputs:
+    query:
+      rows:
+        - customer_id: "c100"
+          full_name: "Alice Johnson"
+          email: "alice.johnson@example.com"
+          phone: "555-9999"
+          address_line: "10 Market St Suite 200 Denver co 80205"
+          customer_segment: "Retail"
+          account_status: "Active"
+          signup_date: "2022-01-15"
+          signup_timestamp: "2022-01-15 00:00:00"
+          loyalty_score: 55
+

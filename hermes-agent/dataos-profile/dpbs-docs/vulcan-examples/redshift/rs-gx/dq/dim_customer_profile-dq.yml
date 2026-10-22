@@ -1,0 +1,79 @@
+kind: dq
+name: dim_customer_profile_dq
+depends_on: silverv1.dim_customer_profile
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 10
+  max_value: null
+  meta:
+    dimension: completeness
+    name: minimum_customer_profiles
+    description: Customer profile should include the seed customer population
+- expectation: expect_column_values_to_not_be_null
+  column: customer_id
+  meta:
+    dimension: completeness
+    name: no_missing_customer_id
+    description: Customer id is required
+- expectation: expect_column_values_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_customer_profiles
+    description: One profile row per customer
+  column: customer_id
+- expectation: expect_column_values_to_be_between
+  column: total_orders
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: total_orders_non_negative
+    description: Total orders must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: total_revenue
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: total_revenue_non_negative
+    description: Total revenue must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: total_orders
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: total_orders_non_negative_valid_range
+    description: Total orders must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: total_revenue
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: total_revenue_non_negative_valid_range
+    description: Total revenue must be non-negative
+- expectation: expect_column_values_to_not_be_null
+  column: customer_id
+  meta:
+    name: no_missing_customer_ids
+    dimension: completeness
+    description: Customer profile grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: email
+  meta:
+    name: no_missing_emails
+    dimension: completeness
+    description: Email is required on customer profile
+- expectation: expect_column_values_to_be_unique
+  column: customer_id
+  meta:
+    name: unique_customer_ids
+    dimension: uniqueness
+    description: One profile row per customer
+profiles:
+- customer_id
+- region_name
+- customer_segment
+- total_orders
+- total_revenue

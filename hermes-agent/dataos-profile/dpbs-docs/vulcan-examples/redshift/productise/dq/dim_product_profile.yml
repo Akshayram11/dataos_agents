@@ -1,0 +1,29 @@
+kind: dq
+name: dim_product_profile_dq
+depends_on: silverv1.dim_product_profile
+
+profiles:
+  - product_id
+  - category
+  - supplier_id
+  - total_revenue
+  - product_performance
+
+rules:
+  - row_count > 0:
+      name: product_profile_has_rows
+      dimension: completeness
+      description: Product profile should include generated products
+  - missing_count(product_id) = 0:
+      name: no_missing_product_id
+      dimension: completeness
+      description: Product id is required
+  - duplicate_count(product_id) = 0:
+      name: unique_product_profiles
+      dimension: uniqueness
+      description: One profile row per product
+  - invalid_count(total_revenue) = 0:
+      valid min: 0
+      name: product_revenue_non_negative
+      dimension: validity
+      description: Product revenue must be non-negative

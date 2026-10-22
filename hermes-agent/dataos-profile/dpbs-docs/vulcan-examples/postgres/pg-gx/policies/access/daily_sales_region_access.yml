@@ -1,0 +1,38 @@
+type: policy
+name: daily_sales_region_access
+depends_on:
+  - silverv1.fct_daily_sales
+
+rules:
+  - group: product_sandbox_tenant_admin
+  - group: retail_admin
+  - group: retail_north_analyst
+    filter:
+      - member: region_name
+        operator: equals
+        values:
+          - North
+  - group: retail_south_analyst
+    filter:
+      - member: region_name
+        operator: equals
+        values:
+          - South
+  - group: retail_east_analyst
+    filter:
+      - member: region_name
+        operator: equals
+        values:
+          - East
+  - group: retail_west_analyst
+    filter:
+      - member: region_name
+        operator: equals
+        values:
+          - West
+  - group: retail_central_analyst
+    filter:
+      - member: region_name
+        operator: equals
+        values:
+          - Central

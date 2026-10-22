@@ -1,0 +1,53 @@
+{
+  "name": "@@agent_id@@",
+  "version": "v2alpha",
+  "type": "service",
+  "description": "Private Always-on Agent for DataOS tasks",
+  "tags": ["agent", "dataos", "private", "always-on"],
+  "spec": {
+    "compute": "@@compute@@",
+    "runAsUser": "@@agent_id@@",
+    "stateful": true,
+    "disk": {"size": "2Gi", "type": "disk", "mountPath": "/opt/data"},
+    "replicas": 1,
+    "resources": {
+      "requests": {"cpu": "250m", "memory": "512Mi"},
+      "limits": {"cpu": "1500m", "memory": "2Gi"}
+    },
+    "http": {
+      "enabled": true,
+      "port": 9119,
+      "path": "/@@agent_id@@",
+      "stripPath": true,
+      "noNetworkAuthorization": true,
+      "ingress": {"enabled": true, "path": "/@@agent_id@@", "stripPath": true}
+    },
+    "envs": {
+      "HERMES_DASHBOARD": "true",
+      "HERMES_DASHBOARD_HOST": "0.0.0.0",
+      "HERMES_DASHBOARD_PORT": "9119",
+      "HERMES_DASHBOARD_PUBLIC_URL": "https://@@host@@/@@agent_id@@/",
+      "HERMES_HOME": "/opt/data"
+    },
+    "use": {
+      "projection": {
+        "templateType": "liquid",
+        "projections": {
+          "envVars": [
+            {"key": "DATAOS_RUN_AS_APIKEY", "template": "{{ defaultProjections.dataOsRunAsApikey }}"},
+            {"key": "DATAOS_RUN_AS_USER", "template": "{{ defaultProjections.dataOsRunAsUser }}"},
+            {"key": "DATAOS_FQDN", "template": "{{ defaultProjections.dataOsFqdn }}"},
+            {"key": "DATAOS_TENANT_ID", "template": "{{ defaultProjections.dataOsTenantId }}"}
+          ]
+        }
+      }
+    },
+    "stack": "container:1.0",
+    "stackSpec": {
+      "image": "@@main_image@@",
+      "command": ["/opt/hermes/docker/entrypoint-dispatch.sh"],
+      "arguments": ["dataos-dashboard", "@@operator_id@@", "@@dashboard_password_hash@@"]
+    },
+    "servicePorts": [{"name": "http", "port": 9119}]
+  }
+}

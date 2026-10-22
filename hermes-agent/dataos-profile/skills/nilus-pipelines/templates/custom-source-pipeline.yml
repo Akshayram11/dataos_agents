@@ -1,0 +1,31 @@
+name: custom-qualtrics
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+spec:
+  type: batch
+  compute: runnable
+  repo:
+    url: https://bitbucket.org/org/custom-connectors
+    baseDir: packages/gensler-qualtrics-api/custom_source
+    secretId: public:custom-source-repo-secret
+    syncFlags:
+      - "--ref=main"
+  use:
+    projection:
+      secrets:
+        - id: workspace:qualtrics-secret
+          contextAlias: qsecret
+      projections:
+        envVars:
+          - key: QUALTRICS_API_TOKEN
+            template: "{{ secrets['qsecret'].api_token | base64_decode }}"
+  source:
+    address: custom://QualtricsApiCustomSource?api_token={QUALTRICS_API_TOKEN}
+    options:
+      source_table: surveys
+  sink:
+    address: dataos://lakehouse?purpose=rw
+    options:
+      dest_table: raw
+      incremental_strategy: replace

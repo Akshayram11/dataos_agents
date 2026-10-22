@@ -1,0 +1,27 @@
+name: pg-customer-batch
+version: v1alpha
+type: nilus
+tags:
+  - workflow
+  - nilus-batch
+description: Copy public.customer into testing_nilus
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  source:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      source_table: "public.customer"
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.customer
+      incremental_strategy: replace

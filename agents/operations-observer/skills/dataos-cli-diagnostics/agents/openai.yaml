@@ -1,0 +1,4 @@
+interface:
+  display_name: "DataOS CLI Diagnostics"
+  short_description: "Diagnose DataOS incidents with safe read-only CLI access"
+  default_prompt: "Use $dataos-cli-diagnostics to investigate this DataOS incident with read-only evidence."

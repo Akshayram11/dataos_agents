@@ -1,0 +1,21 @@
+{
+  "name": "@@agent_id@@-ui",
+  "version": "v1alpha",
+  "type": "link",
+  "title": "DataOS Operations Observer",
+  "description": "Private operations dashboard for the engineering tenant",
+  "owner": "@@operator_id@@",
+  "tags": ["operations", "observer", "private"],
+  "spec": {
+    "runAsUser": "@@operator_id@@",
+    "link": {
+      "title": "Open Operations Observer",
+      "description": "Monitor DataOS services, workers, workflows and bundles.",
+      "domain": "operations",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzA3MTAwZiIvPjxwYXRoIGQ9Ik0xMiAzMmg4bDYtMTQgMTIgMjgtNi0xNGgyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNGZmM2IyIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==",
+      "owners": ["@@operator_id@@"],
+      "tags": ["operations", "observer", "private"],
+      "url": "https://@@host@@/@@agent_id@@/"
+    }
+  }
+}

@@ -1,0 +1,98 @@
+version: v1alpha
+type: vulcan
+name: ri-trinosn
+spec:
+  compute: engineering-compute
+  engine: trino
+  repo:
+    url: https://bitbucket.org/rubik_/vulcan-examples
+    syncFlags:
+      - "--ref=main"
+      - "--submodules=off"
+    baseDir: vulcan-examples/trino/productise
+    secretId: engineering:gitsecretsn
+  depots:
+    # - dataos://snowflakedepots?purpose=rw
+    - dataos://postgresdepots?purpose=rw
+  trino:
+    overideCatalogConfig:
+      # - name: snowflakedepots
+      #   properties:
+      #     case-insensitive-name-matching: true
+      #     metadata.cache-ttl: 30s
+      - name: postgresdepots
+        properties:
+          case-insensitive-name-matching: true
+          metadata.cache-ttl: 30s
+    coordinator:
+      trinoServerConfig:  
+        configProperties: |
+          coordinator=true
+          node-scheduler.include-coordinator=false
+          http-server.http.port=8080
+          query.max-memory=4GB
+        jvmConfig: |
+          -server
+          -Xmx4G
+          -XX:+UseG1GC
+          -XX:G1HeapRegionSize=32M
+          --add-opens=java.base/java.nio=ALL-UNNAMED
+        logProperties: |
+          io.trino=INFO
+        nodeProperties: |
+          node.id=managed-trino-dp12-coordinator
+    workers:
+      replicas: 1
+      trinoServerConfig:
+        configProperties: |
+          coordinator=false
+          http-server.http.port=8080
+          query.max-memory=4GB
+        jvmConfig: |
+          -server
+          -Xmx4G
+          -XX:+UseG1GC
+          -XX:G1HeapRegionSize=32M
+          --add-opens=java.base/java.nio=ALL-UNNAMED
+        logProperties: |
+          io.trino=INFO
+        nodeProperties: |
+          node.environment=dataos
+  workflow:
+    logLevel: INFO
+    schedule:
+      crons:
+        - "0 */6 * * *"
+      endOn: "2027-01-01T00:00:00-00:00"
+      timezone: "UTC"
+      concurrencyPolicy: Forbid
+    resource:
+      request:
+        cpu: "1000m"
+        memory: "2Gi"
+      limit:
+        cpu: "2000m"
+        memory: "4Gi"
+    plan:
+      command:
+        - vulcan
+      arguments:
+        - --log-to-stdout
+        - plan
+        - --auto-apply
+    run:
+      command:
+        - vulcan
+      arguments:
+        - --log-to-stdout
+        - run
+  api:
+    replicas: 1
+    logLevel: INFO
+    resource:
+      request:
+        cpu: "1000m"
+        memory: "2Gi"
+      limit:
+        cpu: "2000m"
+        memory: "4Gi"

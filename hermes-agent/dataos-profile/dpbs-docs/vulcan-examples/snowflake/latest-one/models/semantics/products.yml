@@ -1,0 +1,93 @@
+kind: semantic
+name: products
+depends_on: lenovo.sales.products
+description: Products dimension (semantic layer)
+
+dimensions:
+  - name: PRODUCT_ID
+    behavior:
+      type: identifier
+  - PRODUCT_NAME
+  - MODEL_NUMBER
+  - name: CATEGORY
+    description: Top-level product category
+    behavior:
+      type: categorical
+    tags:
+      - product
+      - category
+      - segment
+    terms:
+      - product.category
+      - catalog.category
+  - name: SUBCATEGORY
+    description: Product subcategory within a category
+    behavior:
+      type: categorical
+    tags:
+      - product
+      - subcategory
+      - segment
+    terms:
+      - product.subcategory
+      - catalog.subcategory
+  - name: BRAND
+    description: Brand the product belongs to
+    behavior:
+      type: categorical
+    tags:
+      - product
+      - brand
+      - segment
+    terms:
+      - product.brand
+      - catalog.brand
+  - COLOR
+  - SIZE
+  - PRICE
+  - RATING
+  - STOCK_QUANTITY
+  - DISCONTINUED
+
+measures:
+  - name: TOTAL_PRODUCTS
+    type: count
+    expression: "{products.PRODUCT_ID}"
+    description: Total products in the catalog
+    behavior:
+      type: simple
+    tags:
+      - product
+      - count
+      - metric
+    terms:
+      - product.total_products
+      - catalog.product_count
+
+  - name: ACTIVE_PRODUCTS
+    type: count
+    expression: "{products.PRODUCT_ID}"
+    filters:
+      - "{products.DISCONTINUED} = FALSE"
+    description: Total active (non-discontinued) products
+    behavior:
+      type: simple
+    tags:
+      - product
+      - active
+      - metric
+    terms:
+      - product.active_products
+      - catalog.available_products
+
+segments:
+  - name: high_rated_products
+    expression: "{products.RATING} >= 4.0"
+    description: Products rated 4.0 or higher
+    tags:
+      - product
+      - rating
+      - segment
+    terms:
+      - product.high_rated
+      - catalog.top_rated

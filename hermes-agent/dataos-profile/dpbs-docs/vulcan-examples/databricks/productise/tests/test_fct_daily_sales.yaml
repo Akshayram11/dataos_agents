@@ -1,0 +1,105 @@
+test_fct_daily_sales_excludes_cancelled_orders:
+  model: silver.fct_daily_sales
+  inputs:
+    bronze.orders:
+      - order_id: 1
+        customer_id: 10
+        order_date: "2026-01-01 10:00:00"
+        warehouse_id: 100
+        order_status: Shipped
+      - order_id: 2
+        customer_id: 10
+        order_date: "2026-01-01 11:00:00"
+        warehouse_id: 100
+        order_status: Cancelled
+    bronze.customers:
+      - customer_id: 10
+        region_id: 1
+        name: "Avery Stone"
+        email: "avery.stone@example.com"
+        signup_date: "2025-12-01"
+    bronze.regions:
+      - region_id: 1
+        region_name: North
+    bronze.order_items:
+      - order_id: 1
+        item_id: 1
+        product_id: 200
+        quantity: 2
+        unit_price: 10.00
+      - order_id: 2
+        item_id: 1
+        product_id: 200
+        quantity: 5
+        unit_price: 10.00
+    bronze.products:
+      - product_id: 200
+        supplier_id: 300
+        name: "Widget Basic"
+        category: Widgets
+        price: 10.00
+    bronze.shipments:
+      - shipment_id: 500
+        order_id: 1
+        shipped_date: "2026-01-02"
+        carrier: DHL
+  outputs:
+    query:
+      rows:
+        - order_date: "2026-01-01"
+          region_id: 1
+          region_name: North
+          customer_id: 10
+          product_id: 200
+          category: Widgets
+          total_orders: 1
+          total_items_sold: 2
+          total_revenue: 20.00
+          avg_order_value: 20.00
+          total_shipments: 1
+          shipment_rate: 1.0000
+          has_shipment: true
+      partial: true
+
+test_fct_daily_sales_no_shipment:
+  model: silver.fct_daily_sales
+  inputs:
+    bronze.orders:
+      - order_id: 3
+        customer_id: 20
+        order_date: "2026-02-01 09:00:00"
+        warehouse_id: 100
+        order_status: Pending
+    bronze.customers:
+      - customer_id: 20
+        region_id: 2
+        name: "Blake River"
+        email: "blake.river@example.com"
+        signup_date: "2025-11-01"
+    bronze.regions:
+      - region_id: 2
+        region_name: South
+    bronze.order_items:
+      - order_id: 3
+        item_id: 2
+        product_id: 201
+        quantity: 1
+        unit_price: 25.00
+    bronze.products:
+      - product_id: 201
+        supplier_id: 300
+        name: "Widget Pro"
+        category: Widgets
+        price: 25.00
+    bronze.shipments: []
+  outputs:
+    query:
+      rows:
+        - order_date: "2026-02-01"
+          customer_id: 20
+          product_id: 201
+          total_orders: 1
+          total_shipments: 0
+          shipment_rate: 0.0000
+          has_shipment: false
+      partial: true

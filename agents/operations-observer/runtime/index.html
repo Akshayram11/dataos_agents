@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>DataOS Operations Observer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="enhancements.css">
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><span class="brand-mark">DO</span><div><h1>Operations Observer</h1><p id="tenant">Engineering tenant</p></div></div>
+      <div class="header-actions"><span id="live" class="live"><i></i> Connecting</span><button id="settings" class="ghost">Model settings</button><button id="scan">Scan now</button></div>
+    </header>
+    <main>
+      <section class="hero">
+        <div><span class="eyebrow">FIG. 01 / DATAOS TENANT HEALTH</span><h2>Your operational tenant, watched continuously.</h2><p>Read-only monitoring covers services, Vulcan data products, compute, depots, lakehouse, Minerva, Nilus and their supporting artifacts—without changing or restarting anything.</p></div>
+        <div class="scan-meta"><span>Last scan</span><strong id="last-scan">Never</strong><small id="scan-count">0 scans</small></div>
+      </section>
+      <div id="error" class="error hidden"></div>
+      <section class="metrics metrics-five" aria-label="Health summary">
+        <article><span>Resources watched</span><strong id="resource-count">0</strong><small id="types">—</small></article>
+        <article><span>Data products</span><strong id="product-count">0</strong><small>Vulcan + Vulcan test</small></article>
+        <article class="critical"><span>Critical</span><strong id="critical-count">0</strong><small>Needs attention</small></article>
+        <article><span>Open incidents</span><strong id="active-count">0</strong><small>Critical + warning</small></article>
+        <article><span>Resolved</span><strong id="resolved-count">0</strong><small>Retained history</small></article>
+      </section>
+      <section id="type-summary" class="type-summary" aria-label="Inventory by type"></section>
+      <section class="coverage" aria-label="Observer configuration">
+        <div><span>Scope</span><strong id="coverage-scope">Engineering · 4 resource types</strong></div>
+        <div><span>Scan cadence</span><strong id="coverage-cadence">Every 60 seconds</strong></div>
+        <div><span>Pending alert</span><strong id="coverage-pending">After 10 minutes</strong></div>
+        <div><span>Diagnosis</span><strong id="coverage-model">Rule-based monitoring</strong></div>
+      </section>
+      <section class="model-usage" aria-label="OpenAI API usage">
+        <div><span class="eyebrow">OPENAI API METER · PERSISTED CONNECTION TOTAL</span><h3 id="usage-cost">$0.000000 estimated</h3><p id="usage-rate">GPT-5.6 Luna · $0.20 input / $1.20 output per 1M tokens</p></div>
+        <div class="usage-numbers"><span><strong id="usage-requests">0</strong> requests</span><span><strong id="usage-input">0</strong> input</span><span><strong id="usage-cached">0</strong> cached input</span><span><strong id="usage-output">0</strong> output</span><span><strong id="usage-total">0</strong> total tokens</span></div>
+        <small>Estimate uses response-reported tokens and survives page refreshes and Service restarts. It resets only when a different key is saved; your OpenAI billing dashboard is authoritative.</small>
+      </section>
+      <section class="how-it-works">
+        <div><span class="eyebrow">HOW TO USE THIS UI</span><h3>From signal to action</h3></div>
+        <ol><li><strong>Scan the tenant.</strong><span>Every 60 seconds—or with Scan now—the observer reads DataOS APIs and applies health rules to all 16 allowed resource types.</span></li><li><strong>Build safe evidence.</strong><span>Only failed or stuck resources get bounded runtime, log and dependency evidence; Secret and IAM data stays hidden.</span></li><li><strong>Ask the agent.</strong><span>For a new incident, GPT-5.6 Luna receives the redacted evidence once and writes the cause, impact and safe next checks. Healthy scans use no LLM tokens.</span></li></ol>
+      </section>
+      <section class="workspace">
+        <div class="section-head"><div><span class="eyebrow">INCIDENT INBOX</span><h3>What needs you</h3></div><div class="filters"><button class="filter active" data-filter="active">Active</button><button class="filter" data-filter="all">All</button><button class="filter" data-filter="resolved">Resolved</button></div></div>
+        <div id="incidents" class="incident-list"></div>
+        <div id="empty" class="empty"><div class="radar"><i></i></div><h4>No active incidents</h4><p>The observer is watching the tenant's safe operational resources and Vulcan products. Secrets and IAM artifacts are intentionally excluded.</p></div>
+      </section>
+      <section class="resources-panel">
+        <div class="section-head"><div><span class="eyebrow">LIVE TENANT INVENTORY</span><h3>Products and operational artifacts</h3></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Resource</th><th>Type</th><th>Status</th><th>Runtime</th><th>Observed</th></tr></thead><tbody id="resources"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+  <dialog id="settings-dialog">
+    <form method="dialog"><button class="dialog-close" value="cancel" aria-label="Close">×</button><span class="eyebrow">LLM ANALYSIS</span><h3>Model connection</h3><p>Paste an OpenAI API key once. It is validated, encrypted with this DataOS application identity, and stored in the private stateful Service volume. The key is never returned to the browser, so this field stays blank after refresh even when the model is connected.</p><label for="api-key">OpenAI API key</label><input id="api-key" type="password" autocomplete="new-password" placeholder="Enter a new key only to connect or replace"><div id="model-status" class="model-status"></div><button id="save-key" type="button">Validate and save securely</button></form>
+  </dialog>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+name: rename-pkey
+version: v1alpha
+type: nilus
+spec:
+  type: batch
+  compute: runnable
+  use:
+    projection:
+      projections:
+        envVars:
+          - key: SCHEMA_NAMING
+            template: "direct"
+  source:
+    address: dataos://mssqldepot?purpose=rw
+    options:
+      source_table: "query:SELECT [p_Key] AS pKey, name FROM dbo.orders"
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.orders
+      incremental_strategy: replace

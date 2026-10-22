@@ -1,0 +1,40 @@
+type: policy
+name: customer
+depends_on:
+  - sales3.customers
+
+rules:
+  - group: admin
+  - group: platinum_access
+
+    mask:
+      - email
+      
+
+    filter:
+      - member: customer_segment
+        operator: equals
+        values:
+          - Platinum
+
+  - group: gold_access
+    mask:
+      - email
+      
+
+    filter:
+      - member: customer_segment
+        operator: equals
+        values:
+          - Silver
+  - group: silver_access
+    mask:
+      - email
+      
+
+    filter:
+      - member: customer_segment
+        operator: equals
+        values:
+          - Gold
+

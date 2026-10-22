@@ -1,0 +1,63 @@
+kind: dq
+name: dim_product_profile_dq
+depends_on: silverv1.dim_product_profile
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: product_profile_has_rows
+    description: Product profile should include generated products
+- expectation: expect_column_values_to_not_be_null
+  column: PRODUCT_ID
+  meta:
+    dimension: completeness
+    name: no_missing_product_id
+    description: Product id is required
+- expectation: expect_column_values_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_product_profiles
+    description: One profile row per product
+  column: PRODUCT_ID
+- expectation: expect_column_values_to_be_between
+  column: TOTAL_REVENUE
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: product_revenue_non_negative
+    description: Product revenue must be non-negative
+- expectation: expect_column_values_to_be_between
+  column: TOTAL_REVENUE
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: validity
+    name: product_revenue_non_negative_valid_range
+    description: Product revenue must be non-negative
+- expectation: expect_column_values_to_not_be_null
+  column: PRODUCT_ID
+  meta:
+    name: no_missing_product_ids
+    dimension: completeness
+    description: Product profile grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: PRODUCT_NAME
+  meta:
+    name: no_missing_product_names
+    dimension: completeness
+    description: Product name is required
+- expectation: expect_column_values_to_be_unique
+  column: PRODUCT_ID
+  meta:
+    name: unique_product_ids
+    dimension: uniqueness
+    description: One profile row per product
+profiles:
+- PRODUCT_ID
+- CATEGORY
+- SUPPLIER_ID
+- TOTAL_REVENUE
+- PRODUCT_PERFORMANCE

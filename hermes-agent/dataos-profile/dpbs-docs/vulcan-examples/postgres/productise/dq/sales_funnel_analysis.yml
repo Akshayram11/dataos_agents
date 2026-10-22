@@ -1,0 +1,32 @@
+kind: dq
+name: sales_funnel_analysis_dq
+depends_on: goldv1.sales_funnel_analysis
+
+profiles:
+  - funnel_date
+  - region_name
+  - registered_customers
+  - orders_placed
+  - overall_conversion_rate
+
+rules:
+  - row_count > 0:
+      name: sales_funnel_has_rows
+      dimension: completeness
+      description: Sales funnel should produce regional funnel rows
+  - missing_count(region_id) = 0:
+      name: no_missing_region_id
+      dimension: completeness
+      description: Region id is required
+  - invalid_count(overall_conversion_rate) = 0:
+      valid min: 0
+      valid max: 1
+      name: overall_conversion_rate_range
+      dimension: validity
+      description: Overall conversion rate must be between 0 and 1
+  - invalid_count(order_to_shipment_rate) = 0:
+      valid min: 0
+      valid max: 1
+      name: shipment_conversion_rate_range
+      dimension: validity
+      description: Order to shipment rate must be between 0 and 1

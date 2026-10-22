@@ -1,0 +1,46 @@
+kind: dq
+name: rfm_customer_segmentation_dq
+depends_on: gold_sparkv.rfm_customer_segmentation
+
+profiles:
+  - customer_id
+  - customer_name
+  - email
+  - region_name
+  - last_order_date
+  - last_order_day
+  - recency_days
+  - frequency_orders
+  - monetary_value
+  - recency_score
+  - frequency_score
+  - monetary_score
+  - rfm_score
+  - rfm_segment
+  - is_at_risk_customer
+  - recommended_action
+
+rules:
+  - row_count >= 10:
+      name: minimum_rfm_rows
+      dimension: completeness
+      description: RFM output should include customer profiles
+  - missing_count(customer_id) = 0:
+      name: no_missing_customer_id
+      dimension: completeness
+      description: Customer id is required
+  - duplicate_count(customer_id) = 0:
+      name: unique_rfm_customer
+      dimension: uniqueness
+      description: One RFM row per customer
+  - invalid_count(monetary_value) = 0:
+      valid min: 0
+      name: monetary_value_non_negative
+      dimension: validity
+      description: Monetary value must be non-negative
+  - invalid_count(recency_score) = 0:
+      valid min: 1
+      valid max: 5
+      name: recency_score_range
+      dimension: validity
+      description: Recency score must be 1 through 5

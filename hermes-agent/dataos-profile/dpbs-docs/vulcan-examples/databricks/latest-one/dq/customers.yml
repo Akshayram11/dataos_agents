@@ -1,0 +1,25 @@
+kind: dq
+name: customers_dq
+depends_on: sales3.customers
+profiles:
+  - customer_id
+  - full_name
+  - email
+  - phone
+  - address_line
+  - customer_segment
+  - account_status
+  - signup_date
+  - signup_timestamp
+  - loyalty_score
+
+rules:
+  - failed rows:
+      name: invalid_email_format
+      dimension: validity
+      fail query: |
+        SELECT customer_id, full_name, email
+        FROM sales3.customers
+        WHERE email NOT LIKE '%@%' OR email IS NULL
+      samples limit: 10
+      description: "Email addresses must be in valid format"

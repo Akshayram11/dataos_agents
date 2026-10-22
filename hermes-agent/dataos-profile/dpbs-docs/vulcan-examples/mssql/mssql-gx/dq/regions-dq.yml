@@ -1,0 +1,62 @@
+kind: dq
+name: regions_dq
+depends_on: bronzev1.regions
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 0
+  max_value: null
+  meta:
+    dimension: completeness
+    name: bare_row_count_check
+    description: Checklist — row_count without upper bound (>= 0)
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: coverage
+    name: regions_exist
+    description: Checklist — row_count with explicit coverage dimension
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: regions_exist_completeness
+- expectation: expect_column_values_to_not_be_null
+  column: region_name
+  meta:
+    dimension: coverage
+    name: region_names_complete
+    description: Checklist — coverage dimension on missing_count
+- expectation: expect_column_values_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_region_ids
+  column: region_id
+- expectation: expect_table_row_count_to_be_between
+  min_value: 5
+  max_value: 5
+  meta:
+    dimension: completeness
+    name: intentional_fail_exact_row_count
+    description: Checklist — seed has five regions (pass)
+- expectation: expect_column_values_to_not_be_null
+  column: region_id
+  meta:
+    name: no_missing_region_ids
+    dimension: completeness
+    description: Region ID is required
+- expectation: expect_column_values_to_not_be_null
+  column: region_name
+  meta:
+    name: no_missing_region_names
+    dimension: completeness
+    description: Region name is required
+- expectation: expect_table_row_count_to_equal
+  value: 5
+  meta:
+    name: expected_region_count
+    dimension: completeness
+    description: Seed data defines five sales regions
+profiles:
+- region_name

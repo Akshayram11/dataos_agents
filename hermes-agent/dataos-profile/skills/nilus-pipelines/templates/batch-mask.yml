@@ -1,0 +1,28 @@
+name: masked-users-batch
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Batch extract with in-flight PII masking
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  source:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      source_table: public.users
+      type_hints:
+        salary: bigint
+        registration_date: bigint
+      mask:
+        email: hash
+        phone: "partial:3"
+        ssn: ssn
+        card_number: credit_card
+        salary: "round:5000"
+        registration_date: year_only
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: pii.users_masked
+      incremental_strategy: replace

@@ -1,0 +1,17 @@
+name: users-merge
+version: v1alpha
+type: nilus
+spec:
+  type: batch
+  compute: runnable
+  source:
+    address: dataos://sourcedepot?purpose=rw
+    options:
+      source_table: "public.users"
+      incremental_key: updated_at
+      primary_key: id
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.users
+      incremental_strategy: merge

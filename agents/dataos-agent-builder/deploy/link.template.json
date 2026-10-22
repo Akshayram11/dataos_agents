@@ -1,0 +1,21 @@
+{
+  "name": "@@agent_id@@-ui",
+  "version": "v1alpha",
+  "type": "link",
+  "title": "DataOS Agent Builder",
+  "description": "Design, approve, generate and safely deploy private DataOS agents",
+  "owner": "@@operator_id@@",
+  "tags": ["agent", "builder", "private", "governed"],
+  "spec": {
+    "runAsUser": "@@operator_id@@",
+    "link": {
+      "title": "Open Agent Builder",
+      "description": "Turn an outcome into an approved, least-privilege DataOS agent.",
+      "domain": "agent-platform",
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB4PSI0IiB5PSI0IiB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzE3MjAzMyIvPjxwYXRoIGQ9Ik0xOCAyMEg0NlY0NEgxOFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIzIi8+PHBhdGggZD0iTTI0IDI4SDQwTTI0IDM2SDM0IiBzdHJva2U9IiMyODY4ZTgiIHN0cm9rZS13aWR0aD0iMyIvPjwvc3ZnPg==",
+      "owners": ["@@operator_id@@"],
+      "tags": ["agent", "builder", "private", "governed"],
+      "url": "https://@@host@@/@@agent_id@@/"
+    }
+  }
+}

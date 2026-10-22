@@ -1,0 +1,63 @@
+- name: '"mssql"."public_ext"."orders_ext"'
+  grains: [order_id]
+  columns:
+    order_id: INT
+    customer_id: INT
+    order_date: DATE
+    warehouse_id: INT
+    order_status: VARCHAR(255)
+- name: '"mssql"."public_ext"."order_items_ext"'
+  grains: [order_id, item_id]
+  columns:
+    order_id: INT
+    item_id: INT
+    product_id: INT
+    quantity: INT
+    unit_price: DECIMAL(10, 2)
+- name: '"mssql"."public_ext"."customers_ext"'
+  grains: [customer_id]
+  columns:
+    customer_id: INT
+    region_id: INT
+    name: VARCHAR(255)
+    email: VARCHAR(255)
+    signup_date: DATE
+- name: '"mssql"."public_ext"."products_ext"'
+  grains: [product_id]
+  columns:
+    product_id: INT
+    supplier_id: INT
+    name: VARCHAR(255)
+    category: VARCHAR(255)
+    price: DECIMAL(10, 2)
+- name: '"mssql"."public_ext"."regions_ext"'
+  grains: [region_id]
+  columns:
+    region_id: INT
+    region_name: VARCHAR(255)
+- name: '"mssql"."public_ext"."suppliers_ext"'
+  grains: [supplier_id]
+  columns:
+    supplier_id: INT
+    region_id: INT
+    name: VARCHAR(255)
+- name: '"mssql"."public_ext"."warehouses_ext"'
+  grains: [warehouse_id]
+  columns:
+    warehouse_id: INT
+    region_id: INT
+    name: VARCHAR(255)
+- name: '"mssql"."public_ext"."shipments_ext"'
+  grains: [shipment_id]
+  columns:
+    shipment_id: INT
+    order_id: INT
+    shipped_date: DATE
+    carrier: VARCHAR(255)
+- name: '"mssql"."public_ext"."dim_dates_ext"'
+  grains: [dt]
+  columns:
+    dt: DATE
+    year: INT
+    month: INT
+    day_of_week: VARCHAR(255)

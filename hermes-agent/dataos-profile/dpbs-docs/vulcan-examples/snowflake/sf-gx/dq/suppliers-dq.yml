@@ -1,0 +1,68 @@
+kind: dq
+name: suppliers_dq
+depends_on: bronzev1.suppliers
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: suppliers_exist
+- expectation: expect_column_values_to_be_unique
+  meta:
+    dimension: uniqueness
+    name: unique_supplier_ids
+  column: SUPPLIER_ID
+- expectation: expect_column_values_to_not_be_null
+  column: NAME
+  meta:
+    dimension: completeness
+    name: supplier_names_present
+    description: Checklist — explicit rule description metadata
+- expectation: expect_column_values_to_not_be_null
+  column: NAME
+  meta:
+    dimension: completeness
+    name: missing_count_greater_than_zero
+    description: Checklist — no missing supplier names on seed (pass)
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: rule_with_soda_attributes
+    description: Checklist — rule metadata via name/description only (custom attributes not supported locally)
+- expectation: expect_column_mean_to_be_between
+  column: SUPPLIER_ID
+  min_value: 0.0
+  max_value: null
+  strict_min: true
+  meta:
+    dimension: accuracy
+    name: avg_supplier_id_positive
+    description: Checklist — avg on numeric id (sanity)
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT SUPPLIER_ID, NAME
+
+    FROM bronzev1.suppliers
+
+    WHERE 1 = 0'
+  meta:
+    dimension: consistency
+    name: intentional_fail_supplier_audit
+    description: Checklist — failed rows harness (pass on seed)
+- expectation: expect_column_values_to_not_be_null
+  column: SUPPLIER_ID
+  meta:
+    name: no_missing_supplier_ids
+    dimension: completeness
+    description: Supplier grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: NAME
+  meta:
+    name: no_missing_supplier_names
+    dimension: completeness
+    description: Supplier name is required
+profiles:
+- SUPPLIER_ID
+- NAME

@@ -1,0 +1,40 @@
+type: policy
+name: customer
+depends_on:
+  - sales.customers
+
+rules:
+  - group: product_sandbox_tenant_admin
+  - group: platinum
+
+    mask:
+      - email
+      
+
+    filter:
+      - member: customer_segment
+        operator: equals
+        values:
+          - Platinum
+
+  - group: silver
+    mask:
+      - email
+      
+
+    filter:
+      - member: customer_segment
+        operator: equals
+        values:
+          - Silver
+  - group: gold
+    mask:
+      - email
+      
+
+    filter:
+      - member: customer_segment
+        operator: equals
+        values:
+          - Gold
+

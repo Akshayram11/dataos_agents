@@ -1,0 +1,23 @@
+name: sample-users-batch
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Bounded validation extract — remove sql_limit before production
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  source:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      source_table: public.users
+      sql_limit: 5000
+      sql_exclude_columns: "debug_payload,raw_html"
+      sql_reflection_level: minimal
+      type_hints:
+        created_at: timestamp
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.users_sample
+      incremental_strategy: replace

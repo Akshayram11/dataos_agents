@@ -1,0 +1,24 @@
+name: camel-case-direct
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Preserve camelCase identifiers
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  use:
+    projection:
+      projections:
+        envVars:
+          - key: SCHEMA_NAMING
+            template: "direct"
+  source:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      source_table: "product_testing.camel_case_demo"
+  sink:
+    address: dataos://niluspgdepot?purpose=rw
+    options:
+      dest_table: testing_nilus.camel_naming_direct
+      incremental_strategy: replace

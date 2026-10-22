@@ -1,0 +1,37 @@
+name: sf-partsupp-pvc
+version: v1alpha
+type: nilus
+tags: [workflow, nilus-batch]
+description: Batch with a PVC for dlt / working-dir state
+spec:
+  type: batch
+  compute: runnable
+  logLevel: ERROR
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "6Gi"
+  use:
+    volumes:
+      - id: workspace:nilus-state
+        directory: /var/dataos/public/nilus_state
+        readOnly: false
+    projection:
+      projections:
+        envVars:
+          - key: DATAOS_WORK_DIR
+            template: "/var/dataos/public/nilus_state"
+          - key: DATAOS_PERSISTENT_DIR
+            template: "/var/dataos/public/nilus_state"
+  source:
+    address: dataos://nilussfdepot?purpose=rw
+    options:
+      source_table: "TPCH_SF1000.PARTSUPP"
+  sink:
+    address: dataos://testazlh?purpose=rw
+    options:
+      dest_table: testing_nilus.sf_partsupp
+      incremental_strategy: append

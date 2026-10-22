@@ -1,0 +1,143 @@
+test_rfm_customer_segmentation_hibernating_is_at_risk:
+  model: goldv1.rfm_customer_segmentation
+  inputs:
+    silverv1.dim_customer_profile:
+      - customer_id: 99
+        customer_name: "Casey Lowe"
+        email: "casey.lowe@example.com"
+        signup_date: "2024-06-01"
+        region_id: 2
+        region_name: South
+        first_order_date: "2024-07-01"
+        last_order_date: "2025-11-01"
+        days_since_first_order: 540
+        days_since_last_order: 200
+        total_orders: 1
+        total_items_purchased: 3
+        total_revenue: 50.00
+        avg_order_value: 50.00
+        favorite_category: Gadgets
+        total_shipments_received: 1
+        customer_segment: Low Value
+  outputs:
+    query:
+      rows:
+        - customer_id: 99
+          recency_days: 200
+          frequency_orders: 1
+          monetary_value: 50.00
+          recency_score: 1
+          frequency_score: 2
+          monetary_score: 2
+          rfm_segment: Hibernating
+          is_at_risk_customer: true
+      partial: true
+
+test_rfm_customer_segmentation_at_risk:
+  model: goldv1.rfm_customer_segmentation
+  inputs:
+    silverv1.dim_customer_profile:
+      - customer_id: 88
+        customer_name: "Dana Park"
+        email: "dana.park@example.com"
+        signup_date: "2024-01-01"
+        region_id: 3
+        region_name: East
+        first_order_date: "2024-02-01"
+        last_order_date: "2025-12-15"
+        days_since_first_order: 500
+        days_since_last_order: 150
+        total_orders: 3
+        total_items_purchased: 9
+        total_revenue: 800.00
+        avg_order_value: 266.67
+        favorite_category: Widgets
+        total_shipments_received: 3
+        customer_segment: Medium Value
+  outputs:
+    query:
+      rows:
+        - customer_id: 88
+          recency_days: 150
+          frequency_orders: 3
+          monetary_value: 800.00
+          recency_score: 2
+          frequency_score: 4
+          monetary_score: 4
+          rfm_segment: At Risk
+          is_at_risk_customer: true
+      partial: true
+
+test_rfm_customer_segmentation_lost:
+  model: goldv1.rfm_customer_segmentation
+  inputs:
+    silverv1.dim_customer_profile:
+      - customer_id: 77
+        customer_name: "Evan Cross"
+        email: "evan.cross@example.com"
+        signup_date: "2023-06-01"
+        region_id: 4
+        region_name: West
+        first_order_date: "2023-07-01"
+        last_order_date: "2025-10-01"
+        days_since_first_order: 720
+        days_since_last_order: 200
+        total_orders: 3
+        total_items_purchased: 6
+        total_revenue: 400.00
+        avg_order_value: 133.33
+        favorite_category: Gadgets
+        total_shipments_received: 3
+        customer_segment: Low Value
+  outputs:
+    query:
+      rows:
+        - customer_id: 77
+          recency_days: 200
+          frequency_orders: 3
+          monetary_value: 400.00
+          recency_score: 1
+          frequency_score: 4
+          monetary_score: 2
+          rfm_segment: Lost
+          is_at_risk_customer: true
+      partial: true
+
+test_rfm_customer_segmentation_champion:
+  model: goldv1.rfm_customer_segmentation
+  inputs:
+    silverv1.dim_customer_profile:
+      - customer_id: 10
+        customer_name: "Avery Stone"
+        email: "avery.stone@example.com"
+        signup_date: "2025-12-01"
+        region_id: 1
+        region_name: North
+        first_order_date: "2026-01-01"
+        last_order_date: "2026-05-20"
+        days_since_first_order: 150
+        days_since_last_order: 10
+        total_orders: 4
+        total_items_purchased: 12
+        total_revenue: 1200.00
+        avg_order_value: 300.00
+        favorite_category: Widgets
+        total_shipments_received: 4
+        customer_segment: High Value
+  outputs:
+    query:
+      rows:
+        - customer_id: 10
+          customer_name: "Avery Stone"
+          region_name: North
+          last_order_day: "2026-05-20"
+          recency_days: 10
+          frequency_orders: 4
+          monetary_value: 1200.00
+          recency_score: 5
+          frequency_score: 5
+          monetary_score: 5
+          rfm_score: "555"
+          rfm_segment: Champions
+          is_at_risk_customer: false
+      partial: true

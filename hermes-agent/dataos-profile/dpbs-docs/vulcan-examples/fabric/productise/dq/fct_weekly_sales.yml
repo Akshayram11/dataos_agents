@@ -1,0 +1,30 @@
+kind: dq
+name: fct_weekly_sales_dq
+depends_on: silverv1.fct_weekly_sales
+
+profiles:
+  - week_start_date
+  - region_name
+  - category
+  - total_weekly_revenue
+  - active_customers
+
+rules:
+  - row_count > 0:
+      name: weekly_sales_has_rows
+      dimension: completeness
+      description: Weekly sales should produce aggregated rows
+  - missing_count(week_start_date) = 0:
+      name: no_missing_week_start_date
+      dimension: completeness
+      description: Week start date is required
+  - invalid_count(total_weekly_revenue) = 0:
+      valid min: 0
+      name: weekly_revenue_non_negative
+      dimension: validity
+      description: Weekly revenue must be non-negative
+  - invalid_count(active_customers) = 0:
+      valid min: 0
+      name: active_customers_non_negative
+      dimension: validity
+      description: Active customer count must be non-negative

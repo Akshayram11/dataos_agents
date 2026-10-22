@@ -1,0 +1,63 @@
+- name: '"postgresdepots"."public"."orders_ext"'
+  grains: [order_id]
+  columns:
+    order_id: INT
+    customer_id: INT
+    order_date: TIMESTAMP
+    warehouse_id: INT
+    order_status: TEXT
+- name: '"postgresdepots"."public"."order_items_ext"'
+  grains: [order_id, item_id]
+  columns:
+    order_id: INT
+    item_id: INT
+    product_id: INT
+    quantity: INT
+    unit_price: DECIMAL(10, 2)
+- name: '"snowflakedepots"."public"."customers_ext"'
+  grains: [customer_id]
+  columns:
+    customer_id: INT
+    region_id: INT
+    name: TEXT
+    email: TEXT
+    signup_date: DATE
+- name: '"snowflakedepots"."public"."products_ext"'
+  grains: [product_id]
+  columns:
+    product_id: INT
+    supplier_id: INT
+    name: TEXT
+    category: TEXT
+    price: DECIMAL(10, 2)
+- name: '"snowflakedepots"."public"."regions_ext"'
+  grains: [region_id]
+  columns:
+    region_id: INT
+    region_name: TEXT
+- name: '"snowflakedepots"."public"."suppliers_ext"'
+  grains: [supplier_id]
+  columns:
+    supplier_id: INT
+    region_id: INT
+    name: TEXT
+- name: '"postgresdepots"."public"."warehouses_ext"'
+  grains: [warehouse_id]
+  columns:
+    warehouse_id: INT
+    region_id: INT
+    name: TEXT
+- name: '"postgresdepots"."public"."shipments_ext"'
+  grains: [shipment_id]
+  columns:
+    shipment_id: INT
+    order_id: INT
+    shipped_date: DATE
+    carrier: TEXT
+- name: '"postgresdepots"."public"."dim_dates_ext"'
+  grains: [dt]
+  columns:
+    dt: DATE
+    year: INT
+    month: INT
+    day_of_week: TEXT

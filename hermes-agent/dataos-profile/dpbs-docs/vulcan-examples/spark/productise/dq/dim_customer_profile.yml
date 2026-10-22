@@ -1,0 +1,49 @@
+kind: dq
+name: dim_customer_profile_dq
+depends_on: silver_sparkv.dim_customer_profile
+
+profiles:
+  - customer_id
+  - customer_name
+  - email
+  - signup_date
+  - region_id
+  - region_name
+  - first_order_date
+  - last_order_date
+  - days_since_first_order
+  - days_since_last_order
+  - total_orders
+  - total_items_purchased
+  - total_revenue
+  - avg_order_value
+  - favorite_category
+  - total_shipments_received
+  - customer_segment
+  - is_new_customer
+  - is_high_value_customer
+  - is_active_customer
+
+rules:
+  - row_count >= 10:
+      name: minimum_customer_profiles
+      dimension: completeness
+      description: Customer profile should include the seed customer population
+  - missing_count(customer_id) = 0:
+      name: no_missing_customer_id
+      dimension: completeness
+      description: Customer id is required
+  - duplicate_count(customer_id) = 0:
+      name: unique_customer_profiles
+      dimension: uniqueness
+      description: One profile row per customer
+  - invalid_count(total_orders) = 0:
+      valid min: 0
+      name: total_orders_non_negative
+      dimension: validity
+      description: Total orders must be non-negative
+  - invalid_count(total_revenue) = 0:
+      valid min: 0
+      name: total_revenue_non_negative
+      dimension: validity
+      description: Total revenue must be non-negative

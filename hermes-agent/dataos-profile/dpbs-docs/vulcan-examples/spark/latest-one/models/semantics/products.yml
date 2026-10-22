@@ -1,0 +1,93 @@
+kind: semantic
+name: products
+depends_on: sales.products
+description: Products dimension (semantic layer)
+
+dimensions:
+  - name: product_id
+    behavior:
+      type: identifier
+  - product_name
+  - model_number
+  - name: category
+    description: Top-level product category
+    behavior:
+      type: categorical
+    tags:
+      - product
+      - category
+      - segment
+    terms:
+      - product.category
+      - catalog.category
+  - name: subcategory
+    description: Product subcategory within a category
+    behavior:
+      type: categorical
+    tags:
+      - product
+      - subcategory
+      - segment
+    terms:
+      - product.subcategory
+      - catalog.subcategory
+  - name: brand
+    description: Brand the product belongs to
+    behavior:
+      type: categorical
+    tags:
+      - product
+      - brand
+      - segment
+    terms:
+      - product.brand
+      - catalog.brand
+  - color
+  - size
+  - price
+  - rating
+  - stock_quantity
+  - discontinued
+
+measures:
+  - name: total_products
+    type: count
+    expression: "{products.product_id}"
+    description: Total products in the catalog
+    behavior:
+      type: simple
+    tags:
+      - product
+      - count
+      - metric
+    terms:
+      - product.total_products
+      - catalog.product_count
+
+  - name: active_products
+    type: count
+    expression: "{products.product_id}"
+    filters:
+      - "{products.discontinued} = FALSE"
+    description: Total active (non-discontinued) products
+    behavior:
+      type: simple
+    tags:
+      - product
+      - active
+      - metric
+    terms:
+      - product.active_products
+      - catalog.available_products
+
+segments:
+  - name: high_rated_products
+    expression: "{products.rating} >= 4.0"
+    description: Products rated 4.0 or higher
+    tags:
+      - product
+      - rating
+      - segment
+    terms:
+      - product.high_rated
+      - catalog.top_rated

@@ -1,0 +1,131 @@
+model:
+  provider: openai
+  default: gpt-5.6-luna
+
+toolsets:
+  - file
+  - terminal
+  - skills
+  - memory
+  - session_search
+  - cronjob
+  - delegation
+  - clarify
+  - mcp-dataos-cli
+  - mcp-dataos-consumption
+  - mcp-dataos-docs
+
+agent:
+  disabled_toolsets:
+    - browser
+    - computer_use
+    - image_gen
+    - video_gen
+    - tts
+    - messaging
+
+# The DataOS application serves chat through the authenticated dashboard. The
+# generic Hermes OpenAI-compatible API listener is not part of this build.
+platforms:
+  api_server:
+    enabled: false
+
+# The public DataOS ingress is fail-closed unless an authentication provider
+# is registered. Keep the bundled password provider explicit rather than
+# relying on first-run plugin migration behavior.
+plugins:
+  enabled:
+    - dashboard_auth/basic
+  disabled: []
+
+terminal:
+  backend: local
+  cwd: "."
+  timeout: 180
+
+mcp_servers:
+  dataos-cli:
+    command: /opt/hermes/.venv/bin/python
+    args: [/opt/hermes/dataos-profile/scripts/dataos_mcp_stdio.py]
+    env:
+      DATAOS_RUN_AS_USER: "${DATAOS_USER_ID}"
+      DATAOS_RUN_AS_APIKEY: "${DATAOS_USER_API_KEY}"
+      DATAOS_FQDN: "${DATAOS_FQDN}"
+      DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"
+      LOG_LEVEL: "error"
+    trust: untrusted
+    timeout: 180
+    connect_timeout: 60
+    supports_parallel_tool_calls: false
+    tools:
+      include:
+        - dataos_version
+        - dataos_resource_get
+        - dataos_resource_runtime_get
+        - dataos_resource_log
+        - dataos_resource_apply
+        - dataos_schema_get
+        - dataos_schema_get_full
+        - dataos_schema_list_types
+        - dataos_schema_validate
+        - dataos_collation_resource_get
+        - dataos_collation_resource_list
+        - dataos_collation_resource_container_groups_get
+        - dataos_collation_resource_runs_get
+        - dataos_collation_container_group_get
+        - dataos_collation_container_group_list
+        - dataos_operate_container_group_get
+        - dataos_operate_container_group_log
+        - dataos_operate_workload_get
+        - dataos_operate_workload_log
+        - dataos_depot_health
+      resources: false
+      prompts: false
+
+  dataos-consumption:
+    url: "https://${DATAOS_FQDN}/arguss/mcp/"
+    headers:
+      Authorization: "Bearer ${DATAOS_USER_API_KEY}"
+    trust: untrusted
+    timeout: 180
+    connect_timeout: 60
+    supports_parallel_tool_calls: false
+    tools:
+      include:
+        - search
+        - table_profile
+        - get_lineage
+        - vulcan_about
+        - vulcan_semantic_schema
+        - vulcan_quality
+        - vulcan_runs
+        - vulcan_query_submit
+        - vulcan_query_result
+      resources: false
+      prompts: false
+
+  dataos-docs:
+    url: "https://v2.dataos.info/~gitbook/mcp"
+    trust: untrusted
+    protocol: auto
+    skip_preflight: true
+    timeout: 120
+    connect_timeout: 60
+    supports_parallel_tool_calls: false
+    tools:
+      include: [searchDocumentation, getPage, askQuestion]
+      resources: false
+      prompts: false
+
+delegation:
+  max_concurrent_children: 3
+  max_spawn_depth: 2
+  orchestrator_enabled: true
+
+# The application image is intentionally not a Git checkout. Keep ordinary
+# chat usable there; repository tasks can opt into an isolated worktree after
+# the operator connects or clones a Git/Bitbucket workspace.
+worktree: false
+
+display:
+  skin: botsky

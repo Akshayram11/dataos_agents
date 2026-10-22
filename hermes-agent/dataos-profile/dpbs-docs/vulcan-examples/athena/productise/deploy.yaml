@@ -1,0 +1,89 @@
+version: v1alpha
+type: vulcan
+name: athena_ri
+tags:
+  - retail
+  - retail-intelligence
+  - order-analytics
+  - sales-operations
+  - athena
+
+spec:
+  compute: vulcan
+  engine: athena
+
+  repo:
+    url: https://bitbucket.org/rubik_/vulcan-examples
+    syncFlags:
+      - "--ref=main"
+      - "--submodules=off"
+    baseDir: vulcan-examples/athena/productise
+    secretId: gxvulcan:gitsecretan
+
+  use:
+    projection:
+      secrets:
+        - id: gxvulcan:athena-secret
+          contextAlias: athena
+      projections:
+        envVars:
+          - key: AWS_ACCESS_KEY_ID
+            template: "{{ secrets['athena'].AWS_ACCESS_KEY_ID | base64_decode }}"
+          - key: AWS_SECRET_ACCESS_KEY
+            template: "{{ secrets['athena'].AWS_SECRET_ACCESS_KEY | base64_decode }}"
+          - key: AWS_REGION
+            template: "{{ secrets['athena'].AWS_REGION | base64_decode }}"
+          - key: ATHENA_WORK_GROUP
+            template: "{{ secrets['athena'].ATHENA_WORK_GROUP | base64_decode }}"
+          - key: ATHENA_S3_STAGING_DIR
+            template: "{{ secrets['athena'].ATHENA_S3_STAGING_DIR | base64_decode }}"
+          - key: ATHENA_SCHEMA_NAME
+            template: "{{ secrets['athena'].ATHENA_SCHEMA_NAME | base64_decode }}"
+          - key: ATHENA_CATALOG_NAME
+            template: "{{ secrets['athena'].ATHENA_CATALOG_NAME | base64_decode }}"
+          - key: ATHENA_S3_WAREHOUSE_LOCATION
+            template: "{{ secrets['athena'].ATHENA_S3_WAREHOUSE_LOCATION | base64_decode }}"
+
+  workflow:
+    schedule:
+      crons:
+        - "*/75 * * * *"
+      endOn: "2027-01-01T00:00:00-00:00"
+      timezone: "US/Pacific"
+      concurrencyPolicy: Forbid
+
+    logLevel: INFO
+
+    resource:
+      request:
+        cpu: "200m"
+        memory: "512Mi"
+      limit:
+        cpu: "1000m"
+        memory: "1Gi"
+
+    plan:
+      command:
+        - vulcan
+      arguments:
+        - --log-to-stdout
+        - plan
+        - --auto-apply
+
+    run:
+      command:
+        - vulcan
+      arguments:
+        - --log-to-stdout
+        - run
+
+  api:
+    replicas: 2
+    logLevel: INFO
+    resource:
+      request:
+        cpu: "200m"
+        memory: "512Mi"
+      limit:
+        cpu: "4000m"
+        memory: "3Gi"

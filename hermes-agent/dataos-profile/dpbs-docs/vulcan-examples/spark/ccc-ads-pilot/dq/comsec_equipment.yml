@@ -1,0 +1,84 @@
+kind: dq
+name: comsec_equipment_dq
+depends_on: bronze_ccc.comsec_equipment
+
+profiles:
+  - equipment_serial_number
+  - equipment_type
+  - classification_level
+  - assigned_custodian_name
+  - custodian_ssn
+  - key_material_expiry_date
+  - last_inspection_date
+  - inspection_due_date
+  - operational_status
+  - assigned_location
+  - comsec_account_number
+  - disposition_authority
+  - archive_date
+
+rules:
+  - row_count >= 5000:
+      name: minimum_comsec_seed_volume
+      dimension: completeness
+      description: ComSec pilot seed must include at least 5,000 synthetic records
+  - missing_count(equipment_serial_number) = 0:
+      name: no_missing_equipment_serial_number
+      dimension: completeness
+      description: Equipment serial number is the grain of the ComSec ADS candidate
+  - duplicate_count(equipment_serial_number) = 0:
+      name: unique_equipment_serial_numbers
+      dimension: uniqueness
+      description: Each ComSec equipment record must be unique
+  - missing_count(disposition_authority) = 0:
+      name: no_missing_disposition_authority
+      dimension: completeness
+      description: Disposition authority is a T-0 records-management control
+  - failed rows:
+      name: allowed_equipment_type_values
+      dimension: validity
+      fail query: |
+        SELECT equipment_serial_number, equipment_type
+        FROM @this_model
+        WHERE equipment_type NOT IN ('KMI', 'CCI', 'EKMS', 'FILL_DEVICE')
+      samples limit: 20
+      description: Equipment Type must use the approved COMSEC equipment code list
+  - failed rows:
+      name: inspection_due_date_current
+      dimension: timeliness
+      fail query: |
+        SELECT equipment_serial_number, inspection_due_date, operational_status
+        FROM @this_model
+        WHERE inspection_due_date < DATE '2026-09-07'
+          AND operational_status = 'Active'
+      samples limit: 20
+      description: Active ComSec equipment must not be past inspection due date without status update
+  - failed rows:
+      name: plaintext_ssn_detection
+      dimension: security
+      fail query: |
+        SELECT equipment_serial_number, custodian_ssn
+        FROM @this_model
+        WHERE custodian_ssn RLIKE '^[0-9]{3}-[0-9]{2}-[0-9]{4}$'
+      samples limit: 20
+      description: Custodian SSN is a deprecated legacy PII field and must be masked or redacted
+  - failed rows:
+      name: disposition_authority_matches_archive_date
+      dimension: consistency
+      fail query: |
+        SELECT equipment_serial_number, disposition_authority, archive_date
+        FROM @this_model
+        WHERE disposition_authority = 'AFRIMS-COMSEC-MAINT-3Y'
+          AND archive_date <> DATE '2029-12-31'
+        UNION ALL
+        SELECT equipment_serial_number, disposition_authority, archive_date
+        FROM @this_model
+        WHERE disposition_authority = 'AFRIMS-COMSEC-CUST-6Y'
+          AND archive_date <> DATE '2032-12-31'
+        UNION ALL
+        SELECT equipment_serial_number, disposition_authority, archive_date
+        FROM @this_model
+        WHERE disposition_authority = 'AFRIMS-COMSEC-INCIDENT-10Y'
+          AND archive_date <> DATE '2036-12-31'
+      samples limit: 20
+      description: Archive date must align with the dataset-level AFRIMS retention authority

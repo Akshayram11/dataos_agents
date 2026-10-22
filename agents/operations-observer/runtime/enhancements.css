@@ -1,0 +1,56 @@
+.metrics-five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.type-summary { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0 30px; }
+.type-chip { padding: 6px 9px; border: 1px solid var(--line); background: transparent; color: var(--muted); font: 11px/1.25 var(--mono); }
+.type-chip strong { margin-right: 3px; color: var(--ink); }
+
+.coverage { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin-top: 0; border: 1px solid var(--line); background: var(--line); }
+.coverage div { padding: 16px 18px; background: var(--surface); }
+.coverage span, .coverage strong { display: block; }
+.coverage span { color: var(--muted); font: 10px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .055em; }
+.coverage strong { margin-top: 6px; font-size: 13px; font-weight: 620; }
+
+.model-usage { display: grid; grid-template-columns: minmax(280px, .8fr) 1.5fr; gap: 20px 34px; align-items: center; margin: 32px 0 0; padding: 24px; border: 1.5px solid var(--blue); background: var(--surface); }
+.model-usage h3 { margin: 4px 0 4px; font-size: 24px; letter-spacing: -.025em; }
+.model-usage p, .model-usage small { margin: 0; color: var(--muted); }
+.model-usage > small { grid-column: 1 / -1; font: 10px/1.5 var(--mono); }
+.usage-numbers { display: grid; grid-template-columns: repeat(5, minmax(88px, 1fr)); border: 1px solid var(--line); background: var(--line); gap: 1px; }
+.usage-numbers span { min-height: 72px; padding: 11px; background: var(--surface); color: var(--muted); font: 10px/1.35 var(--mono); }
+.usage-numbers strong { display: block; margin-bottom: 7px; color: var(--ink); font: 600 17px/1 var(--sans); }
+
+.how-it-works { display: grid; grid-template-columns: minmax(210px, .55fr) 1.45fr; gap: 40px; margin-top: 32px; padding: 30px 24px; border-block: 1px solid var(--line); }
+.how-it-works h3 { margin: 0; font-size: 27px; letter-spacing: -.03em; }
+.how-it-works ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 0; list-style: none; counter-reset: steps; }
+.how-it-works li { counter-increment: steps; padding: 0 20px; border-left: 1px solid var(--line); }
+.how-it-works li::before { content: "0" counter(steps); display: block; margin-bottom: 22px; color: var(--blue); font: 11px/1 var(--mono); }
+.how-it-works li strong, .how-it-works li span { display: block; }
+.how-it-works li strong { font-size: 15px; }
+.how-it-works li span { margin-top: 6px; color: var(--muted); font-size: 12px; }
+
+.incident .signal { color: var(--ink); }
+.incident .impact { font-size: 13px; }
+.next-check { display: block; margin-top: 15px; padding: 11px 12px; border: 1px solid var(--line); background: var(--surface-strong); color: #34598f; font: 11px/1.45 var(--mono); overflow-wrap: anywhere; white-space: normal; }
+.analysis-error { color: var(--amber) !important; font-size: 12px; }
+.acknowledged { align-self: start; padding-top: 8px; color: var(--muted); font: 10px/1.3 var(--mono); text-transform: uppercase; }
+.resource-alert td:first-child { box-shadow: inset 3px 0 var(--red); }
+.state.failed, .state.crashing-0-1, .state.error { border-color: #d7a09a; background: var(--red-soft); color: #8d2a23; }
+.state.running-1, .state.succeeded, .state.active { border-color: #a7c7b7; background: var(--green-soft); color: var(--green); }
+.artifact-evidence { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--line); }
+.artifact-evidence summary { color: var(--blue); cursor: pointer; font: 11px/1.4 var(--mono); }
+.artifact-evidence pre { max-height: 280px; padding: 12px; overflow: auto; background: var(--surface-strong); color: var(--muted); font: 10px/1.5 var(--mono); overflow-wrap: anywhere; white-space: pre-wrap; }
+
+@media (max-width: 1100px) {
+  .metrics-five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .model-usage { grid-template-columns: 1fr; }
+  .model-usage > small { grid-column: auto; }
+  .how-it-works { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .coverage { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .usage-numbers { grid-template-columns: repeat(3, minmax(88px, 1fr)); }
+}
+@media (max-width: 620px) {
+  .metrics-five, .coverage, .usage-numbers { grid-template-columns: 1fr; }
+  .how-it-works ol { grid-template-columns: 1fr; }
+  .how-it-works li { padding: 18px 0; border-left: 0; border-top: 1px solid var(--line); }
+  .how-it-works li::before { margin-bottom: 10px; }
+}

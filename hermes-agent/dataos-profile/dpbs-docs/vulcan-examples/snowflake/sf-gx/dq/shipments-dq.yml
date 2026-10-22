@@ -1,0 +1,126 @@
+kind: dq
+name: shipments_dq
+depends_on: bronzev1.shipments
+expectations:
+- expectation: expect_table_row_count_to_be_between
+  min_value: 1
+  max_value: null
+  meta:
+    dimension: completeness
+    name: shipments_exist
+- expectation: vulcan_freshness
+  column: SHIPPED_DATE
+  op: <
+  threshold_seconds: 31536000.0
+  meta:
+    dimension: timeliness
+    name: shipped_date_freshness
+    description: Checklist — freshness on date column
+- expectation: vulcan_freshness
+  column: SHIPPED_DATE
+  op: <
+  threshold_seconds: 315360000.0
+  meta:
+    dimension: timeliness
+    name: shipped_date_freshness_one_day
+    description: Checklist — freshness window (pass on static seed)
+- expectation: vulcan_freshness
+  column: SHIPPED_DATE
+  op: <
+  threshold_seconds: 315360000.0
+  meta:
+    dimension: timeliness
+    name: shipped_date_freshness_24h
+    description: Checklist — long freshness window on date column (pass on seed)
+- expectation: expect_column_values_to_be_in_set
+  column: CARRIER
+  value_set:
+  - DHL
+  - UPS
+  - FedEx
+  - USPS
+  - BlueDart
+  meta:
+    dimension: validity
+    name: carrier_valid_values
+    description: Checklist — invalid_percent with valid values
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT SHIPMENT_ID, SHIPPED_DATE
+
+    FROM bronzev1.shipments
+
+    WHERE SHIPPED_DATE < DATE ''1900-01-01'''
+  meta:
+    dimension: timeliness
+    name: shipped_before_epoch
+    description: Checklist — failed rows with samples (should pass)
+- expectation: expect_column_values_to_be_unique
+  column: SHIPMENT_ID
+  meta:
+    dimension: uniqueness
+    name: duplicate_percent_shipment_id
+    description: Checklist — duplicate_percent
+- expectation: vulcan_change_over_time
+  metric: row_count
+  history_mode: last
+  history_aggregation: min
+  history_count: 1
+  percent: true
+  operator: '>='
+  threshold: -100.0
+  meta:
+    dimension: timeliness
+    name: shipment_row_count_change
+    description: Checklist — change for row_count vs previous measurement
+- expectation: expect_column_values_to_be_in_set
+  column: CARRIER
+  value_set:
+  - DHL
+  - UPS
+  - FedEx
+  - USPS
+  - BlueDart
+  meta:
+    dimension: validity
+    name: carrier_valid_values_valid_values
+    description: Checklist — invalid_percent with valid values
+- expectation: expect_column_values_to_not_be_null
+  column: SHIPMENT_ID
+  meta:
+    name: no_missing_shipment_ids
+    dimension: completeness
+    description: Shipment grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: ORDER_ID
+  meta:
+    name: no_missing_order_ids
+    dimension: completeness
+    description: Shipments must reference an order
+- expectation: expect_column_values_to_not_be_null
+  column: SHIPPED_DATE
+  meta:
+    name: no_missing_ship_dates
+    dimension: completeness
+    description: Ship date is required for fulfillment metrics
+- expectation: expect_column_values_to_be_unique
+  column: SHIPMENT_ID
+  meta:
+    name: unique_shipment_ids
+    dimension: uniqueness
+    description: Shipment ID is the table grain
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT s.SHIPMENT_ID, s.ORDER_ID
+
+    FROM {batch} AS s
+
+    LEFT JOIN bronzev1.orders AS o ON s.ORDER_ID = o.ORDER_ID
+
+    WHERE o.ORDER_ID IS NULL
+
+    '
+  meta:
+    name: shipments_have_valid_orders
+    dimension: consistency
+    description: Every shipment must reference an existing order
+profiles:
+- CARRIER

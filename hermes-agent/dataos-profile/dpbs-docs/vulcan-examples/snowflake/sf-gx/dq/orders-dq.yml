@@ -1,0 +1,78 @@
+kind: dq
+name: orders_dq
+depends_on: bronzev1.orders
+expectations:
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT o.ORDER_ID, o.CUSTOMER_ID
+
+    FROM {batch} AS o
+
+    LEFT JOIN bronzev1.customers c ON o.CUSTOMER_ID = c.CUSTOMER_ID
+
+    WHERE c.CUSTOMER_ID IS NULL'
+  meta:
+    dimension: consistency
+    name: orders_have_valid_customers
+    description: Every order must reference an existing customer
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT o.ORDER_ID, o.WAREHOUSE_ID
+
+    FROM {batch} AS o
+
+    LEFT JOIN bronzev1.warehouses w ON o.WAREHOUSE_ID = w.WAREHOUSE_ID
+
+    WHERE w.WAREHOUSE_ID IS NULL'
+  meta:
+    dimension: consistency
+    name: orders_have_valid_warehouses
+    description: Every order must reference an existing warehouse
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: 'SELECT o.ORDER_ID, o.ORDER_STATUS
+
+    FROM {batch} AS o
+
+    LEFT JOIN bronzev1.order_status_lookup osl ON o.ORDER_STATUS = osl.ORDER_STATUS
+
+    WHERE osl.ORDER_STATUS IS NULL'
+  meta:
+    dimension: consistency
+    name: orders_have_valid_status_lookup
+    description: Every order status must exist in the static order status lookup seed
+- expectation: unexpected_rows_expectation
+  unexpected_rows_query: "SELECT source_table, REGION_ID\nFROM (\n  SELECT 'customers' AS source_table, c.REGION_ID\n  FROM\
+    \ bronzev1.customers c\n  LEFT JOIN bronzev1.regions r ON c.REGION_ID = r.REGION_ID\n  WHERE r.REGION_ID IS NULL\n  UNION\
+    \ ALL\n  SELECT 'suppliers' AS source_table, s.REGION_ID\n  FROM bronzev1.suppliers s\n  LEFT JOIN bronzev1.regions r\
+    \ ON s.REGION_ID = r.REGION_ID\n  WHERE r.REGION_ID IS NULL\n  UNION ALL\n  SELECT 'warehouses' AS source_table, w.REGION_ID\n\
+    \  FROM bronzev1.warehouses w\n  LEFT JOIN bronzev1.regions r ON w.REGION_ID = r.REGION_ID\n  WHERE r.REGION_ID IS NULL\n\
+    ) invalid_regions"
+  meta:
+    dimension: consistency
+    name: region_keys_are_shared
+    description: Customer, supplier, and warehouse region keys must exist in regions
+- expectation: expect_column_values_to_not_be_null
+  column: ORDER_ID
+  meta:
+    name: no_missing_order_ids
+    dimension: completeness
+    description: Order grain must be populated
+- expectation: expect_column_values_to_not_be_null
+  column: CUSTOMER_ID
+  meta:
+    name: no_missing_customer_ids
+    dimension: completeness
+    description: Orders must reference a customer
+- expectation: expect_column_values_to_not_be_null
+  column: ORDER_DATE
+  meta:
+    name: no_missing_order_dates
+    dimension: completeness
+    description: Order timestamp is required
+- expectation: expect_column_values_to_be_unique
+  column: ORDER_ID
+  meta:
+    name: unique_order_ids
+    dimension: uniqueness
+    description: Order ID is the table grain
+profiles:
+- ORDER_STATUS
+- CUSTOMER_ID

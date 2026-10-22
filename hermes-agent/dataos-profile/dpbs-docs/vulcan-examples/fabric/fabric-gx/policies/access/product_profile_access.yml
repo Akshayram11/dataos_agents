@@ -1,0 +1,23 @@
+type: policy
+name: product_profile_access
+depends_on:
+  - silverv1.dim_product_profile
+
+rules:
+  - group: product_sandbox_tenant_admin
+  - group: retail_admin
+  - group: retail_north_analyst
+    mask:
+      - supplier_name
+  - group: retail_south_analyst
+    mask:
+      - supplier_name
+  - group: retail_east_analyst
+    mask:
+      - supplier_name
+  - group: retail_west_analyst
+    mask:
+      - supplier_name
+  - group: retail_central_analyst
+    mask:
+      - supplier_name

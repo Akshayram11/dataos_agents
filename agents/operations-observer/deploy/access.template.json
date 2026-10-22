@@ -1,0 +1,188 @@
+[
+  {
+    "name": "observer-@@agent_id@@-resource-read",
+    "collection": "@@tenant@@",
+    "description": "Read status and logs for monitored runnable resources",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read", "read_log"],
+    "objects": {"tags": [
+      ["dataos:resource:service"],
+      ["dataos:resource:worker"],
+      ["dataos:resource:workflow"],
+      ["dataos:resource:bundle"]
+    ]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-tenant-read-in",
+    "collection": "@@tenant@@",
+    "description": "List permitted monitored resource types within the engineering tenant",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read_in"],
+    "objects": {"tags": [["dataos:tenant:@@tenant@@"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-operational-artifact-read",
+    "collection": "@@tenant@@",
+    "description": "Read safe operational resource status with credential and IAM classes excluded",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read", "read_log"],
+    "objects": {"tags": [
+      ["dataos:resource:app"],
+      ["dataos:resource:compute"],
+      ["dataos:resource:dataplane"],
+      ["dataos:resource:depot"],
+      ["dataos:resource:lakehouse"],
+      ["dataos:resource:link"],
+      ["dataos:resource:minerva"],
+      ["dataos:resource:nilus-v5"],
+      ["dataos:resource:stack"],
+      ["dataos:resource:volume"],
+      ["dataos:resource:vulcan"],
+      ["dataos:resource:vulcantest"]
+    ]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-tenant-resource-metadata-read",
+    "collection": "@@tenant@@",
+    "description": "Read common metadata returned by permitted tenant resource list endpoints",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read"],
+    "objects": {"tags": [["dataos:type:resource", "dataos:type:tenant-resource"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-specific-operational-read",
+    "collection": "@@tenant@@",
+    "description": "Read details for allowlisted operational resources so runtime and dependency evidence can be diagnosed",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read"],
+    "objects": {"tags": [
+      ["dataos:resource:app:v1alpha:*"], ["dataos:resource:app:v2alpha:*"],
+      ["dataos:resource:bundle:v1alpha:*"], ["dataos:resource:bundle:v2alpha:*"],
+      ["dataos:resource:compute:v1alpha:*"], ["dataos:resource:compute:v2alpha:*"],
+      ["dataos:resource:dataplane:v1alpha:*"], ["dataos:resource:dataplane:v2alpha:*"],
+      ["dataos:resource:depot:v1alpha:*"], ["dataos:resource:depot:v2alpha:*"],
+      ["dataos:resource:lakehouse:v1alpha:*"], ["dataos:resource:lakehouse:v2alpha:*"],
+      ["dataos:resource:link:v1alpha:*"], ["dataos:resource:link:v2alpha:*"],
+      ["dataos:resource:minerva:v1alpha:*"], ["dataos:resource:minerva:v2alpha:*"],
+      ["dataos:resource:nilus-v5:v1alpha:*"], ["dataos:resource:nilus-v5:v2alpha:*"],
+      ["dataos:resource:service:v1alpha:*"], ["dataos:resource:service:v2alpha:*"],
+      ["dataos:resource:stack:v1alpha:*"], ["dataos:resource:stack:v2alpha:*"],
+      ["dataos:resource:volume:v1alpha:*"], ["dataos:resource:volume:v2alpha:*"],
+      ["dataos:resource:vulcan:v1alpha:*"], ["dataos:resource:vulcan:v2alpha:*"],
+      ["dataos:resource:vulcantest:v1alpha:*"], ["dataos:resource:vulcantest:v2alpha:*"],
+      ["dataos:resource:worker:v1alpha:*"], ["dataos:resource:worker:v2alpha:*"],
+      ["dataos:resource:workflow:v1alpha:*"], ["dataos:resource:workflow:v2alpha:*"]
+    ]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-resource-api-read",
+    "collection": "system",
+    "description": "Read the engineering tenant resource and runtime APIs",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["get"],
+    "objects": {"paths": [
+      "/poros/api/v2/tenants/@@tenant@@/resources/service",
+      "/poros/api/v2/tenants/@@tenant@@/resources/service/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/worker",
+      "/poros/api/v2/tenants/@@tenant@@/resources/worker/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/workflow",
+      "/poros/api/v2/tenants/@@tenant@@/resources/workflow/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/bundle",
+      "/poros/api/v2/tenants/@@tenant@@/resources/bundle/**"
+    ]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-state-volume-use",
+    "collection": "@@tenant@@",
+    "description": "Use only the observer's private persistent state volume",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read", "use"],
+    "objects": {"tags": [["dataos:resource:volume:v2alpha:@@state_volume@@"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-compute-use",
+    "collection": "@@tenant@@",
+    "description": "Run the observer on its configured compute",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read", "use"],
+    "objects": {"tags": [["dataos:resource:compute:v2alpha:@@compute@@"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-operational-artifact-api-read",
+    "collection": "system",
+    "description": "Read only safe engineering operational artifact APIs; no credential or IAM paths",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["get"],
+    "objects": {"paths": [
+      "/poros/api/v2/tenants/@@tenant@@/resources/app",
+      "/poros/api/v2/tenants/@@tenant@@/resources/app/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/compute",
+      "/poros/api/v2/tenants/@@tenant@@/resources/compute/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/dataplane",
+      "/poros/api/v2/tenants/@@tenant@@/resources/dataplane/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/depot",
+      "/poros/api/v2/tenants/@@tenant@@/resources/depot/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/lakehouse",
+      "/poros/api/v2/tenants/@@tenant@@/resources/lakehouse/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/link",
+      "/poros/api/v2/tenants/@@tenant@@/resources/link/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/minerva",
+      "/poros/api/v2/tenants/@@tenant@@/resources/minerva/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/nilus-v5",
+      "/poros/api/v2/tenants/@@tenant@@/resources/nilus-v5/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/stack",
+      "/poros/api/v2/tenants/@@tenant@@/resources/stack/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/volume",
+      "/poros/api/v2/tenants/@@tenant@@/resources/volume/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/vulcan",
+      "/poros/api/v2/tenants/@@tenant@@/resources/vulcan/**",
+      "/poros/api/v2/tenants/@@tenant@@/resources/vulcantest",
+      "/poros/api/v2/tenants/@@tenant@@/resources/vulcantest/**"
+    ]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-compute-runtime-use",
+    "collection": "@@tenant@@",
+    "description": "Authorize the DataOS runtime compute use check within this tenant",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["use"],
+    "objects": {"tags": [["dataos:resource:compute"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-compute-runtime-read",
+    "collection": "@@tenant@@",
+    "description": "Authorize the DataOS runtime compute read check within this tenant",
+    "subjects": {"tags": ["users:id:@@agent_id@@"]},
+    "predicates": ["read"],
+    "objects": {"tags": [["dataos:resource:compute"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-operator-run-as",
+    "collection": "@@tenant@@",
+    "description": "Allow the single owner to deploy the observer identity",
+    "subjects": {"tags": ["users:id:@@operator_id@@"]},
+    "predicates": ["run_as"],
+    "objects": {"tags": [["users:id:@@agent_id@@"]]},
+    "allow": true
+  },
+  {
+    "name": "observer-@@agent_id@@-private-ingress",
+    "collection": "system",
+    "description": "Allow only the configured owner to open the observer UI and APIs",
+    "subjects": {"tags": ["users:id:@@operator_id@@"]},
+    "predicates": ["get", "post"],
+    "objects": {"paths": ["/@@agent_id@@", "/@@agent_id@@/**"]},
+    "allow": true
+  }
+]

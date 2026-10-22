@@ -1,0 +1,44 @@
+kind: dq
+name: fct_daily_sales_dq
+depends_on: silverv2.fct_daily_sales
+
+profiles:
+  - order_date
+  - region_id
+  - region_name
+  - customer_id
+  - product_id
+  - category
+  - total_orders
+  - total_items_sold
+  - total_revenue
+  - avg_order_value
+  - total_shipments
+  - shipment_rate
+  - has_shipment
+
+
+rules:
+  - row_count >= 20:
+      name: minimum_daily_sales_rows
+      dimension: completeness
+      description: Daily sales should contain at least 20 rows from the seed data
+  - missing_count(order_date) = 0:
+      name: no_missing_order_date
+      dimension: completeness
+      description: Order date is required
+  - missing_count(customer_id) = 0:
+      name: no_missing_customer_id
+      dimension: completeness
+      description: Customer id is required
+  - invalid_count(total_revenue) = 0:
+      valid min: 0
+      name: total_revenue_non_negative
+      dimension: validity
+      description: Revenue must be non-negative
+  - invalid_count(shipment_rate) = 0:
+      valid min: 0
+      valid max: 1
+      name: shipment_rate_between_zero_and_one
+      dimension: validity
+      description: Shipment rate must be between 0 and 1
