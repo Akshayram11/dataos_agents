@@ -18,11 +18,11 @@ Build, validate, and deploy Vulcan data products. Be proactive, thorough, and ac
 
 This skill turns a validated design spec into a working, deployed data product as fast as possible. The input is a `data-product-plan.md` produced by the `design-data-product` skill.
 
-> **How this skill is installed**: The skills and grounding docs are installed by running `npx dataproduct-builder-skills` in the project root. This copies the skill files into the IDE folder (`.cursor/skills/`, `.claude/skills/`, or `.codex/skills/`) and installs `/opt/data/dpbs-docs/vulcan-docs/`, `/opt/data/dpbs-docs/dataos-philosophy/`, and `/opt/data/dpbs-docs/vulcan-examples/` into the project. If at any point the grounding docs are missing or a `/opt/data/dpbs-docs/` read returns nothing, tell the user to run `npx dataproduct-builder-skills` in their project root to install them.
+> **How this skill is installed**: The skills and grounding docs are installed by running `npx dataproduct-builder-skills` in the project root. This copies the skill files into the IDE folder (`.cursor/skills/`, `.claude/skills/`, or `.codex/skills/`) and installs `/opt/data/hermes/dpbs-docs/vulcan-docs/`, `/opt/data/hermes/dpbs-docs/dataos-philosophy/`, and `/opt/data/hermes/dpbs-docs/vulcan-examples/` into the project. If at any point the grounding docs are missing or a `/opt/data/hermes/dpbs-docs/` read returns nothing, tell the user to run `npx dataproduct-builder-skills` in their project root to install them.
 
 **Language note**: Vulcan is anti-pipeline. Never use "pipeline" in output or conversation. Use "model DAG", "data product", or "model layers" instead.
 
-**Do not open the wheel.** `/opt/data/dpbs-docs/vulcan-*.whl` is an install artifact only. You may glob its filename and pass that path to `pip install`. Do not Read, grep, unzip, or otherwise inspect the archive (no METADATA, no bundled source, no embedded docs). If you need Vulcan behavior, read `/opt/data/dpbs-docs/vulcan-docs/`, `/opt/data/dpbs-docs/dataos-philosophy/`, or `/opt/data/dpbs-docs/vulcan-examples/`. After install, use `vulcan --help` — do not recover CLI flags by opening the wheel.
+**Do not open the wheel.** `/opt/data/hermes/dpbs-docs/vulcan-*.whl` is an install artifact only. You may glob its filename and pass that path to `pip install`. Do not Read, grep, unzip, or otherwise inspect the archive (no METADATA, no bundled source, no embedded docs). If you need Vulcan behavior, read `/opt/data/hermes/dpbs-docs/vulcan-docs/`, `/opt/data/hermes/dpbs-docs/dataos-philosophy/`, or `/opt/data/hermes/dpbs-docs/vulcan-examples/`. After install, use `vulcan --help` — do not recover CLI flags by opening the wheel.
 
 ## Vulcan Project Layout (standard structure created by `vulcan init`)
 
@@ -82,10 +82,10 @@ Always use the `vulcan` CLI directly. Before running any `vulcan` command, deter
 1. **CLI as-is**: Run `vulcan --version`. If it works, use `vulcan` directly.
 2. **Workspace venv**: If step 1 fails, look for an existing virtual environment (`.venv/` or `venv/` in the project root) and check it — `.venv/bin/vulcan --version`. If `vulcan` resolves there, use that invocation for the rest of the session.
 3. **Auto-install from bundled wheel**: If `vulcan` is not found in steps 1–2, install it automatically using the bundled wheel:
-   1. Read `/opt/data/dpbs-docs/vulcan-docs/ldk.md` and present it to the user so they understand the setup.
-   2. Find the wheel file: look for `/opt/data/dpbs-docs/vulcan-*.whl` (glob — pick the first match). Use the path only. Do not open or unzip the `.whl`.
-      - If **no match** → tell the user: "The Vulcan wheel is not found under `/opt/data/dpbs-docs/`. Please run `npx builder-skills` first to install it, then let me know." **STOP** until confirmed.
-      - If **found** → let `WHEEL=$(ls /opt/data/dpbs-docs/vulcan-*.whl | head -1)` and proceed.
+   1. Read `/opt/data/hermes/dpbs-docs/vulcan-docs/ldk.md` and present it to the user so they understand the setup.
+   2. Find the wheel file: look for `/opt/data/hermes/dpbs-docs/vulcan-*.whl` (glob — pick the first match). Use the path only. Do not open or unzip the `.whl`.
+      - If **no match** → tell the user: "The Vulcan wheel is not found under `/opt/data/hermes/dpbs-docs/`. Please run `npx builder-skills` first to install it, then let me know." **STOP** until confirmed.
+      - If **found** → let `WHEEL=$(ls /opt/data/hermes/dpbs-docs/vulcan-*.whl | head -1)` and proceed.
    3. Create the `.venv` — run this unconditionally (it is a no-op if `.venv` already exists):
       - First find a compatible interpreter (Vulcan requires `>=3.10, <3.12` — either 3.10 or 3.11 works):
         ```bash
@@ -114,7 +114,7 @@ Always use the `vulcan` CLI directly. Before running any `vulcan` command, deter
       For example, for Postgres: `.venv/bin/pip install "${WHEEL}[postgres]"`
    6. Verify: `.venv/bin/vulcan --version`. If it prints a version, use `.venv/bin/vulcan` for all subsequent commands in this session.
    7. If the install or verification still fails, **HARD STOP**:
-      > "Vulcan CLI installation failed. Please check the error above, review `/opt/data/dpbs-docs/vulcan-docs/ldk.md` for prerequisites, and let me know when it's resolved."
+      > "Vulcan CLI installation failed. Please check the error above, review `/opt/data/hermes/dpbs-docs/vulcan-docs/ldk.md` for prerequisites, and let me know when it's resolved."
       > Do NOT continue with any `vulcan` command until the user confirms it is fixed.
 
 Once the working invocation is determined, use it consistently throughout the session.
@@ -145,11 +145,11 @@ Check if the project directory contains `config.yaml`, `models/`, `models/semant
   **Set `config.yaml` `name:` to kebab-case now** — lowercase + hyphens (e.g. `customer-pricing-recommendations`, NOT `customer_pricing_recommendations`). `vulcan create_deploy_yaml` validates it against `^[a-z]([-a-z0-9]*[a-z0-9])?$` and rejects underscores; changing `name:` later invalidates the state registry and forces a `.state.db` delete + re-plan.
   **Wait for the user to confirm** before proceeding. Do NOT continue automatically.
 
-  **Add `ignore_patterns` to `config.yaml` BEFORE any plan** — this is mandatory. Vulcan scans the entire project directory, so without ignore patterns it will pick up files from `/opt/data/dpbs-docs/` (including `/opt/data/dpbs-docs/vulcan-examples/`, `/opt/data/dpbs-docs/vulcan-docs/`, `/opt/data/dpbs-docs/dataos-philosophy/`) and attempt to compile them as models, causing spurious errors. Open `config.yaml` and add:
+  **Add `ignore_patterns` to `config.yaml` BEFORE any plan** — this is mandatory. Vulcan scans the entire project directory, so without ignore patterns it will pick up files from `/opt/data/hermes/dpbs-docs/` (including `/opt/data/hermes/dpbs-docs/vulcan-examples/`, `/opt/data/hermes/dpbs-docs/vulcan-docs/`, `/opt/data/hermes/dpbs-docs/dataos-philosophy/`) and attempt to compile them as models, causing spurious errors. Open `config.yaml` and add:
 
   ```yaml
   ignore_patterns:
-    - "/opt/data/dpbs-docs/**"
+    - "/opt/data/hermes/dpbs-docs/**"
   ```
 
   Do this immediately after init, before running any `vulcan plan` or generating any project files. If this step is skipped, every subsequent plan will fail with confusing errors from the docs files.
@@ -168,18 +168,18 @@ Read the entire `data-product-plan.md` end-to-end, including the Verification Su
 
 Pay attention to: entities, grain, measures vs metrics, dimensions, sources, consumption pattern, and assumptions.
 
-**Extract and hold the engine**: Find the `engine` field in Section 2 (Data Sources) or the YAML contract. Store it as `<ENGINE>`. For ALL example lookups in this session, you MUST only read from `/opt/data/dpbs-docs/vulcan-examples/<ENGINE>/`. Never open any other engine subfolder (e.g. if engine is `snowflake`, read only from `/opt/data/dpbs-docs/vulcan-examples/snowflake/` — never from `postgres/`, `trino/`, etc.). If the engine is missing from the spec, stop and ask the user before continuing.
+**Extract and hold the engine**: Find the `engine` field in Section 2 (Data Sources) or the YAML contract. Store it as `<ENGINE>`. For ALL example lookups in this session, you MUST only read from `/opt/data/hermes/dpbs-docs/vulcan-examples/<ENGINE>/`. Never open any other engine subfolder (e.g. if engine is `snowflake`, read only from `/opt/data/hermes/dpbs-docs/vulcan-examples/snowflake/` — never from `postgres/`, `trino/`, etc.). If the engine is missing from the spec, stop and ask the user before continuing.
 
 **Step 2 — Verify build-specific concepts**
 
-The design workflow already verified core Vulcan concepts (grain, measures, metrics, dimensions, entities, model kinds). Read the relevant pages in `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` only for implementation-level concepts not covered in the design verification:
+The design workflow already verified core Vulcan concepts (grain, measures, metrics, dimensions, entities, model kinds). Read the relevant pages in `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` only for implementation-level concepts not covered in the design verification:
 
 - `column_descriptions` — syntax and requirements for MODEL blocks
 - `SEED models` — when to use seeds vs external models
 - The cron schedule format from the spec (e.g., "@daily", "@hourly")
 - Any business terms from the spec that lack clear definitions
 
-If the spec has NO verification summary, fall back to full verification: read the `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` pages for every Vulcan concept (grain, MODEL kind, assertions, semantic measures, time dimensions) and confirm every business term.
+If the spec has NO verification summary, fall back to full verification: read the `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` pages for every Vulcan concept (grain, MODEL kind, assertions, semantic measures, time dimensions) and confirm every business term.
 
 **Step 3 — Plan components**
 
@@ -194,7 +194,7 @@ Document your understanding and show this to the user before proceeding to Stage
 
 ### Spec Understanding:
 - **Grain**: [one row represents...]
-  Source: /opt/data/dpbs-docs/vulcan-docs and /opt/data/dpbs-docs/dataos-philosophy (grain)
+  Source: /opt/data/hermes/dpbs-docs/vulcan-docs and /opt/data/hermes/dpbs-docs/dataos-philosophy (grain)
 - **Entities**: [list]
 - **Measures**: [list with aggregation types]
 - **Metrics**: [list — each as measure + time dimension]
@@ -203,7 +203,7 @@ Document your understanding and show this to the user before proceeding to Stage
 ### Implementation Reasoning (WHY & HOW):
 
 **WHY these models:**
-- **Gold Model**: [chosen because grain requires aggregation of X over Y timeframe, matches [example pattern] from /opt/data/dpbs-docs/vulcan-examples]
+- **Gold Model**: [chosen because grain requires aggregation of X over Y timeframe, matches [example pattern] from /opt/data/hermes/dpbs-docs/vulcan-examples]
 - **Silver Model** (if needed): [chosen because multiple gold models need [shared join], OR raw data needs [cleaning/dedup] before aggregation]
 - **Bronze Models**: [chosen to ingest from [sources] because gold columns [A, B, C] come from these tables]
 
@@ -217,13 +217,13 @@ Flow: Bronze [raw_orders, raw_customers]
 ```
 
 **Model Selection Justification:**
-- Model Kind: [FULL/INCREMENTAL_BY_TIME_RANGE/INCREMENTAL_BY_UNIQUE_KEY/EMBEDDED/SEED/SCD_TYPE_2_BY_TIME/SCD_TYPE_2_BY_COLUMN/VIEW] chosen because [data volume/refresh pattern/source characteristics from /opt/data/dpbs-docs/vulcan-docs and /opt/data/dpbs-docs/dataos-philosophy]
+- Model Kind: [FULL/INCREMENTAL_BY_TIME_RANGE/INCREMENTAL_BY_UNIQUE_KEY/EMBEDDED/SEED/SCD_TYPE_2_BY_TIME/SCD_TYPE_2_BY_COLUMN/VIEW] chosen because [data volume/refresh pattern/source characteristics from /opt/data/hermes/dpbs-docs/vulcan-docs and /opt/data/hermes/dpbs-docs/dataos-philosophy]
 - Grain Justification: [one row per X because metrics require Y level of detail, verified against [example]]
 - Staging Decision: [needed/not needed because: shared logic across N models / single gold use only]
 
 ### Vulcan Implementation Plan:
 - **Model Kind**: [FULL/INCREMENTAL_BY_TIME_RANGE/INCREMENTAL_BY_UNIQUE_KEY/EMBEDDED/SEED/SCD_TYPE_2_BY_TIME/SCD_TYPE_2_BY_COLUMN/VIEW]
-  Rationale: [from /opt/data/dpbs-docs/vulcan-docs and /opt/data/dpbs-docs/dataos-philosophy]
+  Rationale: [from /opt/data/hermes/dpbs-docs/vulcan-docs and /opt/data/hermes/dpbs-docs/dataos-philosophy]
 - **Schema**: [raw/staging/analytics]
 - **Assertions Needed**: [list based on grain/measures]
 - **Time Dimension**: [field name, TIMESTAMP cast required: yes/no]
@@ -247,9 +247,9 @@ CHECKPOINT: Present this summary to the user and STOP. Do NOT proceed to Stage 1
 
 ### Core Principles
 
-1. **Ground in the docs** — before using any Vulcan concept, syntax, or pattern in output, confirm it against `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` (and read from `/opt/data/dpbs-docs/vulcan-examples/` for syntax). See Resource Selection Quick Reference.
-2. **Never reason beyond the docs** — if a concept, syntax, or pattern isn't explicitly covered in `/opt/data/dpbs-docs/vulcan-docs/`, `/opt/data/dpbs-docs/dataos-philosophy/`, or `/opt/data/dpbs-docs/vulcan-examples/`, don't deduce or extrapolate an answer from general knowledge. Say it's undocumented and ask the user or point to the closest documented alternative. Do NOT search the web or consult dataos.info (or any other online DataOS/Vulcan documentation site) as a fallback — it may not match this project's bundled version. `https://v2.dataos.info` is the one exception — it's the correct, current documentation domain and may be used.
-3. **Do not open the wheel** — `/opt/data/dpbs-docs/vulcan-*.whl` is an install artifact only. You may glob its filename and pass that path to `pip install`. Do not Read, grep, unzip, or otherwise inspect the archive. Vulcan behavior comes from the docs above, or from `vulcan --help` after install.
+1. **Ground in the docs** — before using any Vulcan concept, syntax, or pattern in output, confirm it against `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` (and read from `/opt/data/hermes/dpbs-docs/vulcan-examples/` for syntax). See Resource Selection Quick Reference.
+2. **Never reason beyond the docs** — if a concept, syntax, or pattern isn't explicitly covered in `/opt/data/hermes/dpbs-docs/vulcan-docs/`, `/opt/data/hermes/dpbs-docs/dataos-philosophy/`, or `/opt/data/hermes/dpbs-docs/vulcan-examples/`, don't deduce or extrapolate an answer from general knowledge. Say it's undocumented and ask the user or point to the closest documented alternative. Do NOT search the web or consult dataos.info (or any other online DataOS/Vulcan documentation site) as a fallback — it may not match this project's bundled version. `https://v2.dataos.info` is the one exception — it's the correct, current documentation domain and may be used.
+3. **Do not open the wheel** — `/opt/data/hermes/dpbs-docs/vulcan-*.whl` is an install artifact only. You may glob its filename and pass that path to `pip install`. Do not Read, grep, unzip, or otherwise inspect the archive. Vulcan behavior comes from the docs above, or from `vulcan --help` after install.
 4. **Fix, don't explain** — when errors occur, apply the exact fix. Don't stop at diagnosis.
 5. **Iterate per component** — generate → `vulcan evaluate` → fix → `vulcan plan` → fix → next component. Never batch all files before your first plan run.
 
@@ -260,9 +260,9 @@ CHECKPOINT: Present this summary to the user and STOP. Do NOT proceed to Stage 1
 This loop is used whenever `vulcan plan` fails, at any stage:
 
 1. Read the error message from `vulcan plan` output
-2. Look up the error in `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` (search for the error text or the concept it touches) to understand the root cause and fix
-3. Fix the broken file yourself, cross-checking against the relevant `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` pages and the Vulcan syntax rules below
-4. If the root cause is structural (not just syntax) → read from `/opt/data/dpbs-docs/vulcan-examples/` (category: `<affected category>`, engine: `<engine>`) to see how working projects handle it
+2. Look up the error in `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` (search for the error text or the concept it touches) to understand the root cause and fix
+3. Fix the broken file yourself, cross-checking against the relevant `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` pages and the Vulcan syntax rules below
+4. If the root cause is structural (not just syntax) → read from `/opt/data/hermes/dpbs-docs/vulcan-examples/` (category: `<affected category>`, engine: `<engine>`) to see how working projects handle it
 5. Apply the fix
 6. Re-run `vulcan plan`
 7. Repeat until the plan succeeds
@@ -303,9 +303,9 @@ Ground every step in the docs and real examples — this is mandatory, not optio
 
 | Situation                                          | What to do                                                                                                                                     | When                                                                                    |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Any Vulcan concept mentioned                       | Read the relevant page(s) in `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/`                                                                 | BEFORE using the concept in any output                                                  |
-| Before starting a component group                  | Read files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/` only — do NOT open any other engine subfolder                                                 | ONCE per group, before generating any file in it                                        |
-| After generating a file, or when vulcan plan fails | Self-review the file against `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/`, the Vulcan syntax rules below, and the group examples          | After writing each file to catch Vulcan-specific issues; and in the error recovery loop |
+| Any Vulcan concept mentioned                       | Read the relevant page(s) in `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/`                                                                 | BEFORE using the concept in any output                                                  |
+| Before starting a component group                  | Read files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/` only — do NOT open any other engine subfolder                                                 | ONCE per group, before generating any file in it                                        |
+| After generating a file, or when vulcan plan fails | Self-review the file against `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/`, the Vulcan syntax rules below, and the group examples          | After writing each file to catch Vulcan-specific issues; and in the error recovery loop |
 | Plan the project structure                         | Derive the file manifest yourself from the spec + `VULCAN_PROJECT_LAYOUT` + examples                                                           | BEFORE generating files                                                                 |
 | Enrich metadata                                    | Derive column descriptions/tags/owner/terms yourself from the spec + docs                                                                      | After Groups A-C are written to disk (Step 2.5)                                         |
 | Plan quality rules and checks                      | Derived during design (Section 15 of spec); re-derive yourself after Group B only if Section 15 is absent or any values are marked [Estimated] | —                                                                                       |
@@ -316,19 +316,19 @@ When a docs page you used has a reference URL, show it to the user as "Reference
 
 ### Official DataOS Engine Guide
 
-Use the bundled official DataOS engine guide for engine-specific connection, dialect, identifier casing, supported model kinds, materialization, permissions, limits, and troubleshooting. Use the matching `/opt/data/dpbs-docs/vulcan-examples/<engine>/` folder for concrete project syntax. Never substitute another engine's guide or examples.
+Use the bundled official DataOS engine guide for engine-specific connection, dialect, identifier casing, supported model kinds, materialization, permissions, limits, and troubleshooting. Use the matching `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/` folder for concrete project syntax. Never substitute another engine's guide or examples.
 
 | `<ENGINE>` | Official guide |
 |---|---|
-| `postgres` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/postgres/` |
-| `snowflake` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/snowflake/` |
-| `databricks` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/databricks/` |
-| `spark` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/spark-1/` |
-| `trino` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/trino-1/` |
-| `mssql` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/sql-server/` |
-| `fabric` | `/opt/data/dpbs-docs/vulcan-docs/engine-guide/microsoft-fabric/` |
+| `postgres` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/postgres/` |
+| `snowflake` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/snowflake/` |
+| `databricks` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/databricks/` |
+| `spark` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/spark-1/` |
+| `trino` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/trino-1/` |
+| `mssql` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/sql-server/` |
+| `fabric` | `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/microsoft-fabric/` |
 
-**When**: read `/opt/data/dpbs-docs/vulcan-docs/engine-guide/README.md` and the matching engine folder once before Groups A/B, then revisit the relevant page before Group C or when troubleshooting. Read the matching examples at the same points.
+**When**: read `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/README.md` and the matching engine folder once before Groups A/B, then revisit the relevant page before Group C or when troubleshooting. Read the matching examples at the same points.
 
 **How**: use the guide to make engine-specific decisions and the examples to confirm file-level syntax. If the target engine is not listed or its guide folder is absent, say that the bundled official guide does not cover it yet; use only its matching example folder plus the general Vulcan docs, and do not infer behavior from a different engine.
 
@@ -354,14 +354,14 @@ Use the bundled official DataOS engine guide for engine-specific connection, dia
 
 Derive the project blueprint yourself from the spec — there is no scaffold tool. Using the
 `data-product-plan.md` (Section 13 Model Architecture especially), the `VULCAN_PROJECT_LAYOUT`,
-and `/opt/data/dpbs-docs/vulcan-examples/` for each component type, produce a **ScaffoldPlan** consisting of:
+and `/opt/data/hermes/dpbs-docs/vulcan-examples/` for each component type, produce a **ScaffoldPlan** consisting of:
 
 - `file_manifest`: files to create, each with `path`, `vulcan_component`, `purpose`, `traceability` (which spec section drove it)
 - `consistency_rules`: cross-file dependency rules (matching model names, matching column names, semantic measure names that differ from columns)
 - `generation_order`: seeds → staging → final → semantics → metrics → checks → tests
 
 Write this plan down before generating any files. Ground every file's structure in the matching
-examples from `/opt/data/dpbs-docs/vulcan-examples/` (category: `...`, engine: `<engine>`) and the relevant `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` pages.
+examples from `/opt/data/hermes/dpbs-docs/vulcan-examples/` (category: `...`, engine: `<engine>`) and the relevant `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` pages.
 
 **Note**: Metadata enrichment runs AFTER models are written to disk — see Step 2.5.
 
@@ -411,7 +411,7 @@ MEDIUM: [area] — [recommendation]  (can address later)
 **If Section 15 is absent or any values are marked [Estimated]**, re-derive the quality rules yourself
 AFTER Group B completes (you will then have a deployed model — pull real schema/values from
 `vulcan evaluate <model_ref> --limit 1`). Ground the rule types in the `dq`/audits pages of
-`/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` and read from `/opt/data/dpbs-docs/vulcan-examples/` (category: `dq` or `audits`, engine: `<engine>`), then
+`/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` and read from `/opt/data/hermes/dpbs-docs/vulcan-examples/` (category: `dq` or `audits`, engine: `<engine>`), then
 update Section 15 of `data-product-plan.md` with the refined rules and real thresholds.
 
 **Step 2 — Generate and verify component-by-component**:
@@ -463,14 +463,14 @@ Follow `generation_order`, grouped by component type. After each group, run `vul
 - **`vars: {execution_time: <ISO-date>}`** — required for INCREMENTAL_BY_TIME_RANGE models; the date controls which weekly/daily interval the model processes during the test. The date MUST fall within the test mock data's date range or the model will return empty results
 - **Mock the direct dependency** — test inputs must mock the silver/staging model (the direct FROM clause target), not the raw seed tables
 
-**Before generating any file in a group**, read from `/opt/data/dpbs-docs/vulcan-examples/<engine>/` once to load real syntax examples for that group. **Only read from this one engine folder — never from any other engine subfolder.** Also read the matching official DataOS guide from the table above; never use another engine's guide as a substitute.
+**Before generating any file in a group**, read from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/` once to load real syntax examples for that group. **Only read from this one engine folder — never from any other engine subfolder.** Also read the matching official DataOS guide from the table above; never use another engine's guide as a substitute.
 
-- Group A/B → read models files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/`
-- Group C → read semantics files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/` (files live in `models/semantics/`)
-- Group C.5 → read metrics files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/` (files live in `models/metrics/`)
-- Group D dq → read dq files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/`
-- Group D audits → read audits files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/`
-- Group E → read tests files from `/opt/data/dpbs-docs/vulcan-examples/<engine>/`
+- Group A/B → read models files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/`
+- Group C → read semantics files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/` (files live in `models/semantics/`)
+- Group C.5 → read metrics files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/` (files live in `models/metrics/`)
+- Group D dq → read dq files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/`
+- Group D audits → read audits files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/`
+- Group E → read tests files from `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/`
 
 Use the found examples as your syntax reference for all files in that group. If no examples are found, note it and continue.
 
@@ -483,11 +483,11 @@ Use the found examples as your syntax reference for all files in that group. If 
 
 2. Generate the file:
    - **Write the MODEL() block first** — define name, kind, grain, assertions, and column_descriptions before writing the SELECT query. This forces you to think about the grain and contract before the implementation.
-   - Use the group examples from `/opt/data/dpbs-docs/vulcan-examples/` as your syntax reference
+   - Use the group examples from `/opt/data/hermes/dpbs-docs/vulcan-examples/` as your syntax reference
    - Fill in model names, columns, grain, measures, and assertions from `data-product-plan.md`
    - Add traceability header: `-- Source: design spec > [traceability field]` (SQL) or `# Source: design spec > [traceability field]` (YAML)
    - **For Group C (semantic YAML) only**: after writing the main semantic structure, insert `ai_context:` blocks at the model level and under each dimension, measure, segment, and join where Section 15.5 provides data. Include only fields that are present (`instructions`, `synonyms`, `examples`, `caveats`). Do NOT add unknown keys — Vulcan fails validation on unknown ai_context keys. Insert `behavior:` blocks per the plan from pre-check step 6.
-   - After drafting: self-review the file against `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/`, the Vulcan syntax rules below, and the group examples — check for Vulcan-specific issues (forbidden keys, measure name collisions, test format errors, unknown ai_context keys). Fix any issues before writing the file to disk.
+   - After drafting: self-review the file against `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/`, the Vulcan syntax rules below, and the group examples — check for Vulcan-specific issues (forbidden keys, measure name collisions, test format errors, unknown ai_context keys). Fix any issues before writing the file to disk.
 
 3. Write the corrected file to the project directory
 
@@ -498,7 +498,7 @@ Use the found examples as your syntax reference for all files in that group. If 
 **Step 2.5 — Metadata enrichment (after all SQL/YAML files are written)**:
 
 Enrich the written files yourself now — AFTER Groups A, B, C are on disk — working from the ACTUAL
-file contents plus the spec. Ground naming conventions and metadata fields in `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/`.
+file contents plus the spec. Ground naming conventions and metadata fields in `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/`.
 Go file by file:
 
 1. **Naming violations** → check each column/model name against the Vulcan naming conventions in the docs; rename offenders in the SQL/YAML files and tell the user what was renamed.
@@ -585,7 +585,7 @@ By this point, each component has already passed individually. This is the full-
   - Are dimensions populated? (no unexpected NULLs)
   - Does the grain hold? (row count matches expectations)
 
-If results look wrong, consult `/opt/data/dpbs-docs/vulcan-docs/` and `/opt/data/dpbs-docs/dataos-philosophy/` to understand the issue and fix the syntax yourself (cross-check with `/opt/data/dpbs-docs/vulcan-examples/`).
+If results look wrong, consult `/opt/data/hermes/dpbs-docs/vulcan-docs/` and `/opt/data/hermes/dpbs-docs/dataos-philosophy/` to understand the issue and fix the syntax yourself (cross-check with `/opt/data/hermes/dpbs-docs/vulcan-examples/`).
 
 ---
 
@@ -707,7 +707,7 @@ Only run this stage once Stage 5 has no remaining ❌ items.
    - A business-intent doc (`usage.yaml` — already populated in Step 1.5 of this workflow).
    - The `review` extra installed in the environment they will run `vulcan` from. **The `.venv` this workflow creates installs only the engine extra, so `vulcan review` does not exist in it yet** — they must add it:
      ```
-     .venv/bin/pip install "/opt/data/dpbs-docs/vulcan-*.whl[review]"
+     .venv/bin/pip install "/opt/data/hermes/dpbs-docs/vulcan-*.whl[review]"
      ```
      Check with `.venv/bin/vulcan review --help`; if it errors, the extra is missing.
    - A `review:` block in `config.yaml` with a `model:` value in `provider:model` form, e.g.:
@@ -726,7 +726,7 @@ Only run this stage once Stage 5 has no remaining ❌ items.
    > ```
    > and export the matching provider API key in your shell (e.g. `export OPENAI_API_KEY=...`). You also need the `review` extra, which this build's `.venv` does not have yet. Then run both:
    > ```
-   > .venv/bin/pip install "/opt/data/dpbs-docs/vulcan-*.whl[review]"
+   > .venv/bin/pip install "/opt/data/hermes/dpbs-docs/vulcan-*.whl[review]"
    > .venv/bin/vulcan review
    > ```
    > yourself, then invoke the `fix-data-product` skill to interpret the report — it only reads an existing report, it doesn't generate one. (The report lands in `.vulcan/reviews` by default; pass `--output` to change it, or `--llm <model>` instead of the `config.yaml` entry.)"
@@ -734,7 +734,7 @@ Only run this stage once Stage 5 has no remaining ❌ items.
    If `review.model` is already set:
    > "Build complete. To review this data product: make sure the API key for `<review.model's provider>` is exported in your shell (e.g. `export OPENAI_API_KEY=...`), install the `review` extra (this build's `.venv` doesn't have it yet) and run review yourself:
    > ```
-   > .venv/bin/pip install "/opt/data/dpbs-docs/vulcan-*.whl[review]"
+   > .venv/bin/pip install "/opt/data/hermes/dpbs-docs/vulcan-*.whl[review]"
    > .venv/bin/vulcan review
    > ```
    > then invoke the `fix-data-product` skill to interpret the report — neither step is triggered automatically. (The report lands in `.vulcan/reviews` by default.)"
@@ -747,7 +747,7 @@ If `vulcan plan` fails 5+ times on the same component after applying different f
 
 1. Present the recurring error and all attempted fixes to the user
 2. Suggest examining the design spec for conflicting requirements
-3. Offer to read from `/opt/data/dpbs-docs/vulcan-examples/` (category: `<category>`, engine: `<engine>`) to find an alternate structural approach
+3. Offer to read from `/opt/data/hermes/dpbs-docs/vulcan-examples/` (category: `<category>`, engine: `<engine>`) to find an alternate structural approach
 
 ---
 

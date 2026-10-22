@@ -8,7 +8,7 @@
     "compute": "@@compute@@",
     "runAsUser": "@@agent_id@@",
     "stateful": true,
-    "disk": {"size": "2Gi", "type": "disk", "mountPath": "/opt/data"},
+    "disk": {"size": "10Gi", "type": "disk", "mountPath": "/opt/data"},
     "replicas": 1,
     "resources": {
       "requests": {"cpu": "250m", "memory": "512Mi"},
@@ -27,7 +27,9 @@
       "HERMES_DASHBOARD_HOST": "0.0.0.0",
       "HERMES_DASHBOARD_PORT": "9119",
       "HERMES_DASHBOARD_PUBLIC_URL": "https://@@host@@/@@agent_id@@/",
-      "HERMES_HOME": "/opt/data"
+      "HERMES_HOME": "/opt/data/hermes",
+      "HERMES_DATAOS_VOLUME_ROOT": "/opt/data",
+      "DATAOS_OWNER_ID": "@@operator_id@@"
     },
     "use": {
       "projection": {
@@ -46,7 +48,7 @@
     "stackSpec": {
       "image": "@@main_image@@",
       "command": ["/opt/hermes/docker/entrypoint-dispatch.sh"],
-      "arguments": ["dataos-dashboard", "@@operator_id@@", "@@dashboard_password_hash@@"]
+      "arguments": ["dataos-dashboard", "@@operator_id@@", "@@dashboard_password_hash@@", "@@dashboard_session_secret@@"]
     },
     "servicePorts": [{"name": "http", "port": 9119}]
   }

@@ -5,7 +5,28 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import stat
+
+
+def remove_openai_key(home: Path) -> None:
+    """Remove the retired OpenAI credential without logging its value."""
+    env_path = home / ".env"
+    if not env_path.is_file():
+        return
+    original = env_path.read_text(encoding="utf-8")
+    lines = [
+        line for line in original.splitlines(keepends=True)
+        if not line.lstrip().startswith("OPENAI_API_KEY=")
+    ]
+    updated = "".join(lines)
+    if updated == original:
+        return
+    tmp = env_path.with_name(env_path.name + ".dataos-migrate.tmp")
+    tmp.write_text(updated, encoding="utf-8")
+    tmp.chmod(stat.S_IMODE(env_path.stat().st_mode))
+    os.replace(tmp, env_path)
+    print("[dataos] removed retired OpenAI credential")
 
 
 def main() -> None:
@@ -25,6 +46,22 @@ def main() -> None:
         'Authorization: "Bearer ${DATAOS_USER_API_KEY}"',
     )
 
+    # MCP subprocesses receive only their declared env block. Pass both the
+    # optional owner credentials and the Service projections; the wrapper
+    # chooses owner values when present and otherwise uses the run-as pair.
+    env_block = (
+        '    env:\n'
+        '      DATAOS_USER_ID: "${DATAOS_USER_ID}"\n'
+        '      DATAOS_USER_API_KEY: "${DATAOS_USER_API_KEY}"\n'
+        '      DATAOS_LOGIN_USER: "${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}"\n'
+        '      DATAOS_OWNER_ID: "${DATAOS_OWNER_ID}"\n'
+        '      DATAOS_RUN_AS_USER: "${DATAOS_RUN_AS_USER}"\n'
+        '      DATAOS_RUN_AS_APIKEY: "${DATAOS_RUN_AS_APIKEY}"\n'
+        '      DATAOS_FQDN: "${DATAOS_FQDN}"\n'
+        '      DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"\n'
+        '      LOG_LEVEL: "error"'
+    )
+
     updated = updated.replace(
         "    command: dataos-ctl\n    args: [develop, assist, mcp, run]",
         "    command: /opt/hermes/.venv/bin/python\n"
@@ -32,9 +69,12 @@ def main() -> None:
         1,
     )
 
-    tenant_line = '      DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"'
-    if '      LOG_LEVEL: "error"' not in updated and tenant_line in updated:
-        updated = updated.replace(tenant_line, tenant_line + '\n      LOG_LEVEL: "error"', 1)
+    args_line = "    args: [/opt/hermes/dataos-profile/scripts/dataos_mcp_stdio.py]"
+    if args_line in updated:
+        start = updated.find("    env:\n", updated.find(args_line) + len(args_line))
+        end = updated.find("    trust:", start)
+        if start != -1 and end != -1:
+            updated = updated[:start] + env_block + "\n" + updated[end:]
 
     if "\nplatforms:\n" not in updated:
         updated = updated.rstrip() + "\n\nplatforms:\n  api_server:\n    enabled: false\n"
@@ -46,6 +86,22 @@ def main() -> None:
         updated = updated.replace("\ndisplay:\n", "\ndisplay:\n  skin: botsky\n", 1)
 
     home = path.parent
+    remove_openai_key(home)
+
+    # This distribution uses a Claude Code OAuth setup-token, not an OpenAI
+    # API key. Migrate the persisted model selection on existing Volumes.
+    updated = re.sub(
+        r"(?m)^(\s*provider:)\s*openai\s*$",
+        r"\1 anthropic",
+        updated,
+        count=1,
+    )
+    updated = re.sub(
+        r"(?m)^(\s*default:)\s*(?:openai/)?gpt-5\.6-luna\s*$",
+        r"\1 claude-sonnet-4-6",
+        updated,
+        count=1,
+    )
     skin_src = Path("/opt/hermes/dataos-profile/skins/botsky.yaml")
     skin_dest = home / "skins" / "botsky.yaml"
     if skin_src.is_file() and not skin_dest.exists():

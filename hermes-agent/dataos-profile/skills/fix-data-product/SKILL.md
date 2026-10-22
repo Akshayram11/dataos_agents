@@ -20,10 +20,10 @@ Interpret an already-generated `vulcan review` report, keep `data-product-plan.m
 ## What this skill does and does not do
 
 - **Does**: locate/read a `vulcan review` report, summarize it, propose a plan update and (for blocker/high, plus AI-readiness gaps) fixes — and waits for explicit agreement before writing anything.
-- **Does not run `vulcan review`.** Generating the report is the user's job, run from their own shell — it needs `pip install "/opt/data/dpbs-docs/vulcan-*.whl[review]"`, a model (either `review.model` in `config.yaml` or the `--llm` flag), and a provider API key exported there (see Step 0). This skill only ever *reads* a report that already exists.
+- **Does not run `vulcan review`.** Generating the report is the user's job, run from their own shell — it needs `pip install "/opt/data/hermes/dpbs-docs/vulcan-*.whl[review]"`, a model (either `review.model` in `config.yaml` or the `--llm` flag), and a provider API key exported there (see Step 0). This skill only ever *reads* a report that already exists.
 - **Does not auto-trigger itself or get triggered by another skill.** Including `build-data-product`, whose post-build stage only reminds the user what's needed — it never runs review and never calls this skill on the user's behalf.
-- **Does not open the wheel.** `/opt/data/dpbs-docs/vulcan-*.whl` is an install artifact only. You may glob its filename and pass that path to `pip install`. Do not Read, grep, unzip, or otherwise inspect the archive (no METADATA, no bundled source, no embedded docs). If you need Vulcan behavior, read `/opt/data/dpbs-docs/vulcan-docs/`, `/opt/data/dpbs-docs/dataos-philosophy/`, or `/opt/data/dpbs-docs/vulcan-examples/`. After install, use `vulcan --help` — do not recover CLI flags by opening the wheel.
-- **Engine-specific fixes use the official guide.** Read `/opt/data/dpbs-docs/vulcan-docs/engine-guide/README.md`, the matching engine folder, and only the matching `/opt/data/dpbs-docs/vulcan-examples/<engine>/` folder. If the official guide does not list the engine, say so and use the matching examples plus general Vulcan docs; never borrow another engine's behavior.
+- **Does not open the wheel.** `/opt/data/hermes/dpbs-docs/vulcan-*.whl` is an install artifact only. You may glob its filename and pass that path to `pip install`. Do not Read, grep, unzip, or otherwise inspect the archive (no METADATA, no bundled source, no embedded docs). If you need Vulcan behavior, read `/opt/data/hermes/dpbs-docs/vulcan-docs/`, `/opt/data/hermes/dpbs-docs/dataos-philosophy/`, or `/opt/data/hermes/dpbs-docs/vulcan-examples/`. After install, use `vulcan --help` — do not recover CLI flags by opening the wheel.
+- **Engine-specific fixes use the official guide.** Read `/opt/data/hermes/dpbs-docs/vulcan-docs/engine-guide/README.md`, the matching engine folder, and only the matching `/opt/data/hermes/dpbs-docs/vulcan-examples/<engine>/` folder. If the official guide does not list the engine, say so and use the matching examples plus general Vulcan docs; never borrow another engine's behavior.
 
 ---
 
@@ -36,7 +36,7 @@ Ask the user (if they haven't already said) whether they have a specific report 
 3. **No report found anywhere** (no path given, and `.vulcan/reviews/` is missing or empty) → do not attempt to generate one. Tell the user:
    > "I couldn't find a review report. This skill only reads an existing `vulcan review` report — it doesn't generate one. To create one, run it yourself:
    > ```
-   > pip install "/opt/data/dpbs-docs/vulcan-*.whl[review]"
+   > pip install "/opt/data/hermes/dpbs-docs/vulcan-*.whl[review]"
    > vulcan review -e <environment>
    > ```
    > That needs a model — either `review.model` set in `config.yaml` or passed as `--llm <model>` — and the matching provider API key exported in your shell. The report is written to `.vulcan/reviews` unless you pass `--output`. `-e/--environment` is the environment to compare the working tree against for live metadata and plan state — which environment you pick can change what the review finds (e.g. a model authored locally but not yet deployed reads differently than one deployed but no longer matching the authored source), so ask the user which environment they reviewed against if it isn't obvious, and record it in Section 17. Once it's done, tell me the report path, or just say 'use the latest' and I'll find it."

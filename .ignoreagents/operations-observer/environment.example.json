@@ -1,0 +1,12 @@
+{
+  "host": "sawaniks-081726.instance.dataos.cloud",
+  "tenant": "engineering",
+  "agent_id": "dataosopsagent",
+  "operator_id": "akshaychametmdcio",
+  "compute": "engineering-compute",
+  "dataplane": "sawandp01",
+  "model": "gpt-5.6-luna",
+  "poll_interval_seconds": 60,
+  "pending_threshold_seconds": 600,
+  "resource_types": ["app", "bundle", "compute", "dataplane", "depot", "lakehouse", "link", "minerva", "nilus-v5", "service", "stack", "volume", "vulcan", "vulcantest", "worker", "workflow"]
+}

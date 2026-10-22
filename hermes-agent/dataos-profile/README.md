@@ -6,7 +6,7 @@ The distribution opts out of Hermes' non-essential bundled skills. A running
 DataOS profile receives the essential Hermes runtime skill, seven application
 skills (including the pinned Nilus workflow), and the three pinned
 `dataproduct-builder-skills` workflows. Their version-matched grounding
-material is stored under `/opt/data/dpbs-docs`.
+material is stored under `/opt/data/hermes/dpbs-docs`.
 
 ## Connections
 

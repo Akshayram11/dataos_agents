@@ -7,4 +7,4 @@
 
 The package was inspected before its installer was executed. The three skill
 files were adapted only to use the hosted application's durable documentation
-path, `/opt/data/dpbs-docs/`.
+path, `/opt/data/hermes/dpbs-docs/`.

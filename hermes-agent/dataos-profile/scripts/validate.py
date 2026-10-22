@@ -19,6 +19,7 @@ def main() -> None:
         "SOUL.md",
         "skins/botsky.yaml",
         "references/agent-project.schema.json",
+        "scripts/prepare_dataos_home.py",
     ]
     missing = [name for name in required if not (ROOT / name).is_file()]
     if missing:
@@ -56,7 +57,7 @@ def main() -> None:
                 raise SystemExit(f"{path} missing {section}")
     for name in external_skills - {"nilus-pipelines"}:
         text = (ROOT / "skills" / name / "SKILL.md").read_text()
-        if f"name: {name}" not in text or "/opt/data/dpbs-docs/" not in text:
+        if f"name: {name}" not in text or "/opt/data/hermes/dpbs-docs/" not in text:
             raise SystemExit(f"invalid vendored builder skill: {name}")
     nilus = ROOT / "skills" / "nilus-pipelines"
     if "name: nilus-pipelines" not in (nilus / "SKILL.md").read_text():
@@ -79,8 +80,11 @@ def main() -> None:
     skin = (ROOT / "skins/botsky.yaml").read_text()
     if "not a general-purpose assistant" not in soul:
         raise SystemExit("SOUL.md is missing the DataOS-only product boundary")
-    if "default: gpt-5.6-luna" not in config or "default: openai/gpt-5.6-luna" in config:
-        raise SystemExit("OpenAI model must use the provider-local gpt-5.6-luna slug")
+    if "provider: anthropic" not in config or "default: claude-sonnet-4-6" not in config:
+        raise SystemExit("Claude Code OAuth must use the reviewed Anthropic default model")
+    distribution = (ROOT / "distribution.yaml").read_text()
+    if "ANTHROPIC_TOKEN" not in distribution or "OPENAI_API_KEY" in distribution:
+        raise SystemExit("distribution must require Claude Code OAuth instead of an OpenAI API key")
     if "display:\n  skin: botsky" not in config:
         raise SystemExit("Botsky skin is not active")
     if 'agent_name: "Botsky Agent"' not in skin or "banner_logo: |" not in skin:
@@ -92,8 +96,13 @@ def main() -> None:
         if f"  {server}:" not in config:
             raise SystemExit(f"missing MCP server: {server}")
     for required_setting in (
-        'DATAOS_RUN_AS_USER: "${DATAOS_USER_ID}"',
-        'DATAOS_RUN_AS_APIKEY: "${DATAOS_USER_API_KEY}"',
+        'DATAOS_USER_API_KEY: "${DATAOS_USER_API_KEY}"',
+        'DATAOS_LOGIN_USER: "${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}"',
+        'DATAOS_OWNER_ID: "${DATAOS_OWNER_ID}"',
+        'DATAOS_RUN_AS_USER: "${DATAOS_RUN_AS_USER}"',
+        'DATAOS_RUN_AS_APIKEY: "${DATAOS_RUN_AS_APIKEY}"',
+        'DATAOS_FQDN: "${DATAOS_FQDN}"',
+        'DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"',
         'Authorization: "Bearer ${DATAOS_USER_API_KEY}"',
         'command: /opt/hermes/.venv/bin/python',
         'args: [/opt/hermes/dataos-profile/scripts/dataos_mcp_stdio.py]',
@@ -101,6 +110,12 @@ def main() -> None:
     ):
         if required_setting not in config:
             raise SystemExit(f"missing DataOS credential boundary: {required_setting}")
+    for masked_projection in (
+        'DATAOS_RUN_AS_USER: "${DATAOS_USER_ID}"',
+        'DATAOS_RUN_AS_APIKEY: "${DATAOS_USER_API_KEY}"',
+    ):
+        if masked_projection in config:
+            raise SystemExit(f"Service credential projection is masked: {masked_projection}")
     if "api_server:\n    enabled: false" not in config:
         raise SystemExit("generic api_server platform must be disabled")
     required_tools = (

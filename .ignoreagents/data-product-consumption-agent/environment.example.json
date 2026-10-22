@@ -1,0 +1,10 @@
+{
+  "host": "sawaniks-081726.instance.dataos.cloud",
+  "tenant": "engineering",
+  "agent_id": "dataproductagent",
+  "operator_id": "akshaychametmdcio",
+  "compute": "engineering-compute",
+  "dataplane": "sawandp01",
+  "model": "gpt-5.6-luna",
+  "mcp_url": "https://sawaniks-081726.instance.dataos.cloud/arguss/mcp/"
+}

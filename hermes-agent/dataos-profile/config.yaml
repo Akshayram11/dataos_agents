@@ -1,6 +1,6 @@
 model:
-  provider: openai
-  default: gpt-5.6-luna
+  provider: anthropic
+  default: claude-sonnet-4-6
 
 toolsets:
   - file
@@ -48,8 +48,12 @@ mcp_servers:
     command: /opt/hermes/.venv/bin/python
     args: [/opt/hermes/dataos-profile/scripts/dataos_mcp_stdio.py]
     env:
-      DATAOS_RUN_AS_USER: "${DATAOS_USER_ID}"
-      DATAOS_RUN_AS_APIKEY: "${DATAOS_USER_API_KEY}"
+      DATAOS_USER_ID: "${DATAOS_USER_ID}"
+      DATAOS_USER_API_KEY: "${DATAOS_USER_API_KEY}"
+      DATAOS_LOGIN_USER: "${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}"
+      DATAOS_OWNER_ID: "${DATAOS_OWNER_ID}"
+      DATAOS_RUN_AS_USER: "${DATAOS_RUN_AS_USER}"
+      DATAOS_RUN_AS_APIKEY: "${DATAOS_RUN_AS_APIKEY}"
       DATAOS_FQDN: "${DATAOS_FQDN}"
       DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"
       LOG_LEVEL: "error"

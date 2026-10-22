@@ -28,14 +28,19 @@ if [ "$(id -u)" -ne 0 ]; then
     if [ "${1:-}" = dataos-dashboard ]; then
         export HERMES_DASHBOARD_BASIC_AUTH_USERNAME="${2:-}"
         export HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH="${3:-}"
-        unset HERMES_DASHBOARD_BASIC_AUTH_SECRET
-        shift 3
+        export HERMES_DASHBOARD_BASIC_AUTH_SECRET="${4:-}"
+        shift 4
     fi
     # The browser tool is disabled in the DataOS profile.  A non-empty value
     # also keeps stage2 from attempting to write s6's root-owned envdir.
     export AGENT_BROWSER_EXECUTABLE_PATH="${AGENT_BROWSER_EXECUTABLE_PATH:-disabled-in-dataos}"
+    # The persistent disk mount is root-owned on DataOS.  Hermes intentionally
+    # rejects that mount root as a control directory, so prepare a uid-owned
+    # child and migrate the previous flat layout before stage2 seeds anything.
+    /opt/hermes/.venv/bin/python \
+        /opt/hermes/dataos-profile/scripts/prepare_dataos_home.py
     /opt/hermes/docker/stage2-hook.sh
-    export HOME="${HERMES_HOME:-/opt/data}"
+    export HOME="${HERMES_HOME:-/opt/data/hermes}"
     cd "$HOME"
     # Existing stateful profiles may predate the explicit DataOS plugin
     # allow-list. Reconcile this single reviewed provider on every boot; the
@@ -54,10 +59,8 @@ if [ "$(id -u)" -ne 0 ]; then
     done
     unset auth_value
     hermes plugins enable basic --no-allow-tool-override
-    exec hermes dashboard \
-        --host "${HERMES_DASHBOARD_HOST:-0.0.0.0}" \
-        --port "${HERMES_DASHBOARD_PORT:-9119}" \
-        --no-open
+    exec /opt/hermes/.venv/bin/python \
+        /opt/hermes/dataos-profile/scripts/dataos_runtime.py
 fi
 
 if [ "$$" -eq 1 ]; then

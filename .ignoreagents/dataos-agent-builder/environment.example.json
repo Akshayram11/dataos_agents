@@ -1,0 +1,9 @@
+{
+  "host": "sawaniks-081726.instance.dataos.cloud",
+  "tenant": "engineering",
+  "agent_id": "agentbuilder",
+  "operator_id": "akshaychametmdcio",
+  "compute": "engineering-compute",
+  "dataplane": "sawandp01",
+  "model": "gpt-5.6-luna"
+}
