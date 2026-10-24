@@ -1,4 +1,4 @@
-"""Private Bitbucket workspace management for the DataOS distribution.
+"""Private Git repository workspace management for the DataOS distribution.
 
 Credentials live in the selected Hermes profile's owner-only ``.env``.  The
 metadata file deliberately contains only the repository URL, branch and local
@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
-from typing import Optional
+from typing import Literal, Optional
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException
@@ -24,13 +24,25 @@ from hermes_cli.web_routers._common import config_scoped_to_thread
 
 
 router = APIRouter()
-TOKEN_ENV = "BITBUCKET_REPOSITORY_TOKEN"
-USERNAME_ENV = "BITBUCKET_REPOSITORY_USERNAME"
-METADATA_NAME = "bitbucket-workspace.json"
+Provider = Literal["bitbucket", "github"]
+PROVIDER_ENV = "REPOSITORY_PROVIDER"
+TOKEN_ENVS = {
+    "bitbucket": "BITBUCKET_REPOSITORY_TOKEN",
+    "github": "GITHUB_REPOSITORY_TOKEN",
+}
+USERNAME_ENVS = {
+    "bitbucket": "BITBUCKET_REPOSITORY_USERNAME",
+    "github": "GITHUB_REPOSITORY_USERNAME",
+}
+DEFAULT_USERNAMES = {"bitbucket": "x-token-auth", "github": "x-access-token"}
+HOSTS = {"bitbucket": "bitbucket.org", "github": "github.com"}
+METADATA_NAME = "repository-workspace.json"
+LEGACY_METADATA_NAME = "bitbucket-workspace.json"
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$")
 
 
-class BitbucketWorkspacePut(BaseModel):
+class RepositoryWorkspacePut(BaseModel):
+    provider: Provider
     repository_url: str = Field(min_length=1, max_length=500)
     branch: str = Field(default="main", min_length=1, max_length=200)
     token: str = Field(default="", max_length=4096)
@@ -44,12 +56,18 @@ def _metadata_path() -> Path:
     return get_hermes_home() / "workspace" / METADATA_NAME
 
 
+def _legacy_metadata_path() -> Path:
+    return get_hermes_home() / "workspace" / LEGACY_METADATA_NAME
+
+
 def _repos_root() -> Path:
     return get_hermes_home() / "workspace" / "repos"
 
 
 def _read_metadata() -> dict:
     path = _metadata_path()
+    if not path.is_file():
+        path = _legacy_metadata_path()
     if not path.is_file():
         return {}
     try:
@@ -78,12 +96,19 @@ def _write_metadata(value: dict) -> None:
             pass
 
 
-def _validated_repository_url(raw: str) -> tuple[str, str]:
+def _provider_from_url(raw: str) -> Provider:
+    host = (urlparse(raw.strip()).hostname or "").lower()
+    if host == HOSTS["github"]:
+        return "github"
+    return "bitbucket"
+
+
+def _validated_repository_url(raw: str, provider: Provider) -> tuple[str, str]:
     url = raw.strip().rstrip("/")
     parsed = urlparse(url)
     if (
         parsed.scheme != "https"
-        or parsed.hostname != "bitbucket.org"
+        or parsed.hostname != HOSTS[provider]
         or parsed.username
         or parsed.password
         or parsed.query
@@ -91,11 +116,14 @@ def _validated_repository_url(raw: str) -> tuple[str, str]:
     ):
         raise HTTPException(
             status_code=400,
-            detail="Use a credential-free HTTPS Bitbucket URL such as https://bitbucket.org/workspace/repository.git.",
+            detail=(
+                f"Use a credential-free HTTPS {provider.title()} URL such as "
+                f"https://{HOSTS[provider]}/owner/repository.git."
+            ),
         )
     parts = [part for part in parsed.path.split("/") if part]
     if len(parts) != 2 or any(part in (".", "..") for part in parts):
-        raise HTTPException(status_code=400, detail="The Bitbucket URL must identify one workspace/repository.")
+        raise HTTPException(status_code=400, detail=f"The {provider.title()} URL must identify one owner/repository.")
     repo = parts[1][:-4] if parts[1].endswith(".git") else parts[1]
     slug = re.sub(r"[^a-zA-Z0-9._-]+", "-", repo).strip(".-")
     if not slug:
@@ -119,13 +147,16 @@ def _validated_branch(branch: str) -> str:
     return branch
 
 
-def _git_env(token: str, username: str) -> dict[str, str]:
+def _git_env(provider: Provider, token: str, username: str) -> dict[str, str]:
     askpass = Path(__file__).resolve().parents[2] / "dataos-profile" / "scripts" / "bitbucket_askpass.py"
     env = dict(os.environ)
     env.update(
         {
-            "BITBUCKET_REPOSITORY_TOKEN": token,
-            "BITBUCKET_REPOSITORY_USERNAME": username or "x-token-auth",
+            "REPOSITORY_PROVIDER": provider,
+            "REPOSITORY_TOKEN": token,
+            "REPOSITORY_USERNAME": username or DEFAULT_USERNAMES[provider],
+            TOKEN_ENVS[provider]: token,
+            USERNAME_ENVS[provider]: username or DEFAULT_USERNAMES[provider],
             "GIT_ASKPASS": str(askpass),
             "GIT_TERMINAL_PROMPT": "0",
             "GIT_CONFIG_COUNT": "1",
@@ -148,12 +179,15 @@ def _run_git(args: list[str], *, env: dict[str, str], cwd: Optional[Path] = None
     )
 
 
-def _test_remote(url: str, branch: str, token: str, username: str) -> None:
-    result = _run_git(["ls-remote", "--exit-code", "--heads", url, f"refs/heads/{branch}"], env=_git_env(token, username))
+def _test_remote(provider: Provider, url: str, branch: str, token: str, username: str) -> None:
+    result = _run_git(
+        ["ls-remote", "--exit-code", "--heads", url, f"refs/heads/{branch}"],
+        env=_git_env(provider, token, username),
+    )
     if result.returncode:
         raise HTTPException(
             status_code=400,
-            detail="Bitbucket authentication failed, the repository is unavailable, or the branch does not exist.",
+            detail=f"{provider.title()} authentication failed, the repository is unavailable, or the branch does not exist.",
         )
 
 
@@ -167,9 +201,9 @@ def _safe_destination(slug: str) -> Path:
     return destination
 
 
-def _prepare(url: str, slug: str, branch: str, token: str, username: str, commit_name: str, commit_email: str) -> Path:
+def _prepare(provider: Provider, url: str, slug: str, branch: str, token: str, username: str, commit_name: str, commit_email: str) -> Path:
     destination = _safe_destination(slug)
-    env = _git_env(token, username)
+    env = _git_env(provider, token, username)
     if destination.exists():
         if not (destination / ".git").is_dir():
             raise HTTPException(status_code=409, detail="The workspace path exists but is not a Git repository.")
@@ -196,13 +230,19 @@ def _status() -> dict:
     from hermes_cli.config import get_env_value_prefer_dotenv
 
     metadata = _read_metadata()
+    provider: Provider = metadata.get("provider") or _provider_from_url(str(metadata.get("repository_url") or ""))
     path = Path(str(metadata.get("workspace_path") or "")) if metadata.get("workspace_path") else None
     return {
         "configured": bool(metadata.get("repository_url")),
-        "token_saved": bool(get_env_value_prefer_dotenv(TOKEN_ENV)),
+        "provider": provider,
+        "token_saved": bool(get_env_value_prefer_dotenv(TOKEN_ENVS[provider])),
+        "token_saved_by_provider": {
+            name: bool(get_env_value_prefer_dotenv(env_name))
+            for name, env_name in TOKEN_ENVS.items()
+        },
         "repository_url": metadata.get("repository_url", ""),
         "branch": metadata.get("branch", "main"),
-        "username": metadata.get("username", "x-token-auth"),
+        "username": metadata.get("username", DEFAULT_USERNAMES[provider]),
         "commit_name": metadata.get("commit_name", ""),
         "commit_email": metadata.get("commit_email", ""),
         "workspace_path": str(path) if path else "",
@@ -217,28 +257,32 @@ async def get_workspace(profile: Optional[str] = None):
 
 
 @router.put("/api/dataos/workspace")
-async def save_workspace(body: BitbucketWorkspacePut, profile: Optional[str] = None):
+async def save_workspace(body: RepositoryWorkspacePut, profile: Optional[str] = None):
     def _save():
         from hermes_cli.config import get_env_value_prefer_dotenv, save_env_value
 
-        url, slug = _validated_repository_url(body.repository_url)
+        provider = body.provider
+        url, slug = _validated_repository_url(body.repository_url, provider)
         branch = _validated_branch(body.branch)
         previous = _read_metadata()
-        token = body.token.strip() or (get_env_value_prefer_dotenv(TOKEN_ENV) or "")
+        token = body.token.strip() or (get_env_value_prefer_dotenv(TOKEN_ENVS[provider]) or "")
         if not token:
-            raise HTTPException(status_code=400, detail="Enter a Bitbucket repository access token.")
-        username = body.username.strip() or str(previous.get("username") or "x-token-auth")
-        _test_remote(url, branch, token, username)
+            raise HTTPException(status_code=400, detail=f"Enter a {provider.title()} repository access token.")
+        previous_username = previous.get("username") if previous.get("provider", provider) == provider else None
+        username = body.username.strip() or str(previous_username or DEFAULT_USERNAMES[provider])
+        _test_remote(provider, url, branch, token, username)
         destination = _safe_destination(slug)
         if body.prepare_workspace:
             destination = _prepare(
-                url, slug, branch, token, username, body.commit_name, body.commit_email
+                provider, url, slug, branch, token, username, body.commit_name, body.commit_email
             )
         # Persist only after the remote and optional clone both succeed.
-        save_env_value(TOKEN_ENV, token)
-        save_env_value(USERNAME_ENV, username)
+        save_env_value(PROVIDER_ENV, provider)
+        save_env_value(TOKEN_ENVS[provider], token)
+        save_env_value(USERNAME_ENVS[provider], username)
         _write_metadata(
             {
+                "provider": provider,
                 "repository_url": url,
                 "branch": branch,
                 "username": username,
@@ -258,17 +302,19 @@ async def sync_workspace(profile: Optional[str] = None):
         from hermes_cli.config import get_env_value_prefer_dotenv
 
         metadata = _read_metadata()
-        token = get_env_value_prefer_dotenv(TOKEN_ENV) or ""
+        provider: Provider = metadata.get("provider") or _provider_from_url(str(metadata.get("repository_url") or ""))
+        token = get_env_value_prefer_dotenv(TOKEN_ENVS[provider]) or ""
         if not metadata.get("repository_url") or not token:
-            raise HTTPException(status_code=400, detail="Connect a Bitbucket repository first.")
-        url, slug = _validated_repository_url(str(metadata["repository_url"]))
+            raise HTTPException(status_code=400, detail=f"Connect a {provider.title()} repository first.")
+        url, slug = _validated_repository_url(str(metadata["repository_url"]), provider)
         branch = _validated_branch(str(metadata.get("branch") or "main"))
         destination = _prepare(
+            provider,
             url,
             slug,
             branch,
             token,
-            str(metadata.get("username") or "x-token-auth"),
+            str(metadata.get("username") or DEFAULT_USERNAMES[provider]),
             str(metadata.get("commit_name") or ""),
             str(metadata.get("commit_email") or ""),
         )

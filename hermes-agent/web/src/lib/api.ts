@@ -417,16 +417,16 @@ function appendSessionFilters(url: string, options: SessionQueryOptions): string
 export const api = {
   buildWsUrl,
   getStatus: () => fetchJSON<StatusResponse>("/api/status"),
-  getBitbucketWorkspace: () =>
-    fetchJSON<BitbucketWorkspace>("/api/dataos/workspace"),
-  saveBitbucketWorkspace: (body: BitbucketWorkspacePut) =>
-    fetchJSON<BitbucketWorkspace>("/api/dataos/workspace", {
+  getRepositoryWorkspace: () =>
+    fetchJSON<RepositoryWorkspace>("/api/dataos/workspace"),
+  saveRepositoryWorkspace: (body: RepositoryWorkspacePut) =>
+    fetchJSON<RepositoryWorkspace>("/api/dataos/workspace", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
-  syncBitbucketWorkspace: () =>
-    fetchJSON<BitbucketWorkspace>("/api/dataos/workspace/sync", {
+  syncRepositoryWorkspace: () =>
+    fetchJSON<RepositoryWorkspace>("/api/dataos/workspace/sync", {
       method: "POST",
     }),
   /**
@@ -1625,9 +1625,13 @@ export interface McpServer {
   plugin?: string | null;
 }
 
-export interface BitbucketWorkspace {
+export type RepositoryProvider = "bitbucket" | "github";
+
+export interface RepositoryWorkspace {
   configured: boolean;
+  provider: RepositoryProvider;
   token_saved: boolean;
+  token_saved_by_provider: Record<RepositoryProvider, boolean>;
   repository_url: string;
   branch: string;
   username: string;
@@ -1639,7 +1643,8 @@ export interface BitbucketWorkspace {
   connected?: boolean;
 }
 
-export interface BitbucketWorkspacePut {
+export interface RepositoryWorkspacePut {
+  provider: RepositoryProvider;
   repository_url: string;
   branch: string;
   token: string;

@@ -5729,6 +5729,7 @@ export interface ToolCompletePayload {
   name: string
   args?: Record<string, unknown> | null
   duration_s?: number | null
+  is_error?: boolean
   result?: unknown
   summary?: string | null
   result_text?: string | null

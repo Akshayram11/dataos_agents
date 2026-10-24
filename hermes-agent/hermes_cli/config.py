@@ -43,7 +43,7 @@ from hermes_cli.secret_prompt import masked_secret_prompt
 from hermes_constants import (
     _IGNORED_MANAGED_VALUES, _LEGACY_MANAGED_SYSTEM, _MANAGED_FALSE_VALUES, _MANAGED_TRUE_VALUES,
     _chown_to_hermes_uid, _container_or_chmod_skipped, _resolve_hermes_uid_gid,
-    apply_secure_dir_policy, get_managed_system)
+    apply_secure_dir_policy, credential_home_for_profile, get_managed_system)
 # Re-export from hermes_constants — canonical definition lives there.
 from hermes_constants import get_hermes_home, get_process_hermes_home
 from utils import atomic_replace, fast_safe_load, file_signature, mkstemp_beside
@@ -470,8 +470,13 @@ def require_parseable_user_config(*, ignore_user_config: bool = False) -> None:
 
 
 def get_env_path() -> Path:
-    """Get the .env file path (for API keys)."""
-    return get_hermes_home() / ".env"
+    """Get the active credential-store path.
+
+    Normal Hermes profiles remain isolated.  The DataOS bot deployment opts
+    into a shared owner credential boundary, in which case every named role
+    reads and writes the root bot ``.env`` instead of duplicating secrets.
+    """
+    return credential_home_for_profile(get_hermes_home()) / ".env"
 
 
 def get_project_root() -> Path:

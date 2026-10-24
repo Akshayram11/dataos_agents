@@ -352,6 +352,37 @@ def named_profile_home(path: str | Path) -> Path | None:
     return None
 
 
+def shared_profile_credentials_enabled(environ: Mapping[str, str] | None = None) -> bool:
+    """Whether named profiles use the bot owner's root ``.env`` credential store.
+
+    Upstream Hermes treats profiles as independent tenants.  A DataOS Always-on
+    Agent uses profiles as specialised roles of one owner-controlled bot instead,
+    so its deployment opts into one credential boundary for every role.  Keeping
+    this behind an explicit runtime flag preserves the upstream isolation default.
+    """
+    source = os.environ if environ is None else environ
+    return str(source.get("HERMES_SHARE_PROFILE_CREDENTIALS", "")).strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+
+
+def credential_home_for_profile(
+    path: str | Path, environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Return the ``.env`` owner for *path* under the selected credential policy.
+
+    With sharing disabled, the profile owns its own ``.env`` exactly as upstream
+    Hermes expects.  With sharing enabled, only a verified
+    ``<root>/profiles/<name>`` home is redirected to ``<root>``; arbitrary paths
+    containing a directory named ``profiles`` never gain access to that store.
+    """
+    home = Path(path)
+    if not shared_profile_credentials_enabled(environ):
+        return home
+    named = named_profile_home(home)
+    return named.parent.parent if named is not None else home
+
+
 def profile_name_for_home(path: str | Path | None) -> str | None:
     """Return the canonical profile id owning *path*, or ``None`` when it is not a profile home.
 
@@ -1491,4 +1522,3 @@ def normalize_scope(scope: str | Path | None) -> str | None:
     normcase on Windows) so writes and reads agree on the key.
     """
     return hermes_home_key(scope) if scope is not None else None
-

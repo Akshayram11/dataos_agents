@@ -5,16 +5,19 @@ import { Button } from "@nous-research/ui/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@nous-research/ui/ui/components/card";
 import { Input } from "@nous-research/ui/ui/components/input";
 import { Label } from "@nous-research/ui/ui/components/label";
+import { Select, SelectOption } from "@nous-research/ui/ui/components/select";
 import { Spinner } from "@nous-research/ui/ui/components/spinner";
 import { Toast } from "@nous-research/ui/ui/components/toast";
 import { useToast } from "@nous-research/ui/hooks/use-toast";
-import { api, type BitbucketWorkspace } from "@/lib/api";
+import { api, type RepositoryProvider, type RepositoryWorkspace } from "@/lib/api";
 import { errorMessage } from "@/lib/api-error";
 import { usePageHeader } from "@/contexts/usePageHeader";
 
-const EMPTY: BitbucketWorkspace = {
+const EMPTY: RepositoryWorkspace = {
   configured: false,
+  provider: "github",
   token_saved: false,
+  token_saved_by_provider: { bitbucket: false, github: false },
   repository_url: "",
   branch: "main",
   username: "x-token-auth",
@@ -26,7 +29,7 @@ const EMPTY: BitbucketWorkspace = {
 };
 
 export default function WorkspacesPage() {
-  const [state, setState] = useState<BitbucketWorkspace>(EMPTY);
+  const [state, setState] = useState<RepositoryWorkspace>(EMPTY);
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,19 +43,34 @@ export default function WorkspacesPage() {
   }, [setTitle]);
 
   useEffect(() => {
-    api.getBitbucketWorkspace()
+    api.getRepositoryWorkspace()
       .then(setState)
       .catch((error) => showToast(`Could not load workspace: ${errorMessage(error)}`, "error"))
       .finally(() => setLoading(false));
   }, [showToast]);
 
-  const update = (key: keyof BitbucketWorkspace, value: string) =>
+  const update = (key: keyof RepositoryWorkspace, value: string) =>
     setState((current) => ({ ...current, [key]: value }));
+
+  const changeProvider = (provider: RepositoryProvider) => {
+    setToken("");
+    setState((current) => ({
+      ...current,
+      provider,
+      configured: false,
+      repository_url: "",
+      username: provider === "github" ? "x-access-token" : "x-token-auth",
+      workspace_path: "",
+      workspace_ready: false,
+      token_saved: current.token_saved_by_provider[provider] ?? false,
+    }));
+  };
 
   const save = async () => {
     setSaving(true);
     try {
-      const next = await api.saveBitbucketWorkspace({
+      const next = await api.saveRepositoryWorkspace({
+        provider: state.provider,
         repository_url: state.repository_url,
         branch: state.branch,
         token,
@@ -63,7 +81,7 @@ export default function WorkspacesPage() {
       });
       setState(next);
       setToken("");
-      showToast("Bitbucket connected and repository workspace prepared.", "success");
+      showToast(`${state.provider === "github" ? "GitHub" : "Bitbucket"} connected and repository workspace prepared.`, "success");
     } catch (error) {
       showToast(errorMessage(error), "error");
     } finally {
@@ -74,7 +92,7 @@ export default function WorkspacesPage() {
   const sync = async () => {
     setSyncing(true);
     try {
-      setState(await api.syncBitbucketWorkspace());
+      setState(await api.syncRepositoryWorkspace());
       showToast("Fetched the configured branch without changing local edits.", "success");
     } catch (error) {
       showToast(errorMessage(error), "error");
@@ -93,21 +111,28 @@ export default function WorkspacesPage() {
           <Badge tone={state.workspace_ready ? "success" : "outline"}>{state.workspace_ready ? "Workspace ready" : "Not connected"}</Badge>
           <Badge tone={state.token_saved ? "success" : "warning"}>{state.token_saved ? "Token saved securely" : "Token required"}</Badge>
         </div>
-        <p className="max-w-3xl text-sm text-muted-foreground">Connect one private Bitbucket repository to Botsky's persistent DataOS disk. The agent can edit and test files, but it must ask before committing or pushing.</p>
+        <p className="max-w-3xl text-sm text-muted-foreground">Connect one private GitHub or Bitbucket repository to Botsky's persistent DataOS disk. The agent can edit and test files, but it must ask before committing or pushing.</p>
       </div>
 
       <Card>
         <CardHeader className="border-b border-border">
-          <CardTitle className="flex items-center gap-2 text-base"><GitBranch className="h-4 w-4" /> Bitbucket repository</CardTitle>
-          <CardDescription>The token is validated with Bitbucket, stored in the owner-only profile, and never returned to this page.</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base"><GitBranch className="h-4 w-4" /> Repository connection</CardTitle>
+          <CardDescription>The token is validated with the selected provider, stored in the owner-only profile, and never returned to this page.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5 pt-5">
-          <div className="grid gap-2"><Label htmlFor="repository-url">Repository HTTPS URL</Label><Input id="repository-url" value={state.repository_url} onChange={(event) => update("repository_url", event.target.value)} placeholder="https://bitbucket.org/workspace/repository.git" autoComplete="off" /></div>
+          <div className="grid gap-2">
+            <Label htmlFor="repository-provider">Provider</Label>
+            <Select id="repository-provider" value={state.provider} onValueChange={(value) => changeProvider(value as RepositoryProvider)}>
+              <SelectOption value="github">GitHub</SelectOption>
+              <SelectOption value="bitbucket">Bitbucket</SelectOption>
+            </Select>
+          </div>
+          <div className="grid gap-2"><Label htmlFor="repository-url">Repository HTTPS URL</Label><Input id="repository-url" value={state.repository_url} onChange={(event) => update("repository_url", event.target.value)} placeholder={state.provider === "github" ? "https://github.com/owner/repository.git" : "https://bitbucket.org/workspace/repository.git"} autoComplete="off" /></div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2"><Label htmlFor="repository-branch">Branch</Label><Input id="repository-branch" value={state.branch} onChange={(event) => update("branch", event.target.value)} placeholder="main" autoComplete="off" /></div>
-            <div className="grid gap-2"><Label htmlFor="repository-username">Bitbucket username</Label><Input id="repository-username" value={state.username} onChange={(event) => update("username", event.target.value)} placeholder="x-token-auth" autoComplete="username" /><p className="text-xs text-muted-foreground">Use <code>x-token-auth</code> for a repository access token, or your Bitbucket username for an API token/app password.</p></div>
+            <div className="grid gap-2"><Label htmlFor="repository-username">{state.provider === "github" ? "GitHub" : "Bitbucket"} username</Label><Input id="repository-username" value={state.username} onChange={(event) => update("username", event.target.value)} placeholder={state.provider === "github" ? "x-access-token" : "x-token-auth"} autoComplete="username" /><p className="text-xs text-muted-foreground">{state.provider === "github" ? <>Use <code>x-access-token</code> with a fine-grained personal access token.</> : <>Use <code>x-token-auth</code> for a repository access token, or your Bitbucket username for an API token/app password.</>}</p></div>
           </div>
-          <div className="grid gap-2"><Label htmlFor="repository-token">Repository token</Label><Input id="repository-token" type="password" value={token} onChange={(event) => setToken(event.target.value)} placeholder={state.token_saved ? "Saved token retained — enter only to replace" : "Enter repository access token"} autoComplete="new-password" /></div>
+          <div className="grid gap-2"><Label htmlFor="repository-token">{state.provider === "github" ? "GitHub personal access token" : "Bitbucket repository token"}</Label><Input id="repository-token" type="password" value={token} onChange={(event) => setToken(event.target.value)} placeholder={state.token_saved ? "Saved token retained — enter only to replace" : "Enter repository access token"} autoComplete="new-password" /><p className="text-xs text-muted-foreground">For agent pushes, grant this repository read/write Contents access. The token is never shown again after saving.</p></div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2"><Label htmlFor="commit-name">Commit author name (optional)</Label><Input id="commit-name" value={state.commit_name} onChange={(event) => update("commit_name", event.target.value)} placeholder="Akshay Chame" /></div>
             <div className="grid gap-2"><Label htmlFor="commit-email">Commit author email (optional)</Label><Input id="commit-email" type="email" value={state.commit_email} onChange={(event) => update("commit_email", event.target.value)} placeholder="you@example.com" /></div>

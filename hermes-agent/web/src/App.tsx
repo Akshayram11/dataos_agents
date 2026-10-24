@@ -66,7 +66,7 @@ import { useSidebarStatus } from "@/hooks/useSidebarStatus";
 import { AuthWidget } from "@/components/AuthWidget";
 import { PageHeaderProvider } from "@/contexts/PageHeaderProvider";
 import { useProfileScope } from "@/contexts/useProfileScope";
-import { ProfileSwitcher } from "@/components/ProfileSwitcher";
+import { AgentRoster } from "@/components/AgentRoster";
 import { ProfileScopeBanner } from "@/components/ProfileScopeBanner";
 import { MemoryPressureBanner } from "@/components/MemoryPressureBanner";
 import { MultiplexStandaloneBanner } from "@/components/MultiplexStandaloneBanner";
@@ -86,7 +86,7 @@ const ProfileBuilderPage = lazy(() => import("@/pages/ProfileBuilderPage"));
 const SkillsPage = lazy(() => import("@/pages/SkillsPage"));
 const McpPage = lazy(() => import("@/pages/McpPage"));
 const WorkspacesPage = lazy(() => import("@/pages/WorkspacesPage"));
-const ChatPage = lazy(() => import("@/pages/ChatPage"));
+const ChatPage = lazy(() => import("@/pages/ConversationalChatPage"));
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useI18n } from "@/i18n";
@@ -131,7 +131,7 @@ const CHAT_NAV_ITEM: NavItem = {
   path: "/chat",
   labelKey: "chat",
   label: "Chat",
-  icon: Terminal,
+  icon: MessageSquare,
 };
 
 /**
@@ -617,14 +617,28 @@ export default function App() {
               </Button>
             </div>
 
-            <ProfileSwitcher collapsed={isDesktopCollapsed} />
+            <AgentRoster collapsed={isDesktopCollapsed} />
 
             <nav
               className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden border-t border-current/10 py-2"
               aria-label={t.app.navigation}
             >
+              <ul className="flex flex-col border-b border-current/10 pb-2">
+                {sidebarNav.coreItems.filter((item) => item.path === "/chat").map((item) => (
+                  <SidebarNavLink
+                    closeMobile={closeMobile}
+                    collapsed={isDesktopCollapsed}
+                    item={item}
+                    key={item.path}
+                    t={t}
+                    tooltipWarmRef={tooltipWarmRef}
+                  />
+                ))}
+              </ul>
+
+              <div className={cn("px-5 pb-1 pt-3 font-sans text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-text-tertiary", isDesktopCollapsed && "lg:hidden")}>Tools &amp; configuration</div>
               <ul className="flex flex-col">
-                {sidebarNav.coreItems.map((item) => (
+                {sidebarNav.coreItems.filter((item) => item.path !== "/chat").map((item) => (
                   <SidebarNavLink
                     closeMobile={closeMobile}
                     collapsed={isDesktopCollapsed}

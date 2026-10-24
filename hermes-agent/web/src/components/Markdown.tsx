@@ -2,7 +2,7 @@ import { useMemo, type ReactNode } from "react";
 
 /**
  * Lightweight markdown renderer for LLM output.
- * Handles: code blocks, inline code, bold, italic, headers, links, lists, horizontal rules.
+ * Handles: code blocks, inline code, bold, italic, headers, links, lists, tables, horizontal rules.
  * NOT a full CommonMark parser — optimized for typical assistant message patterns.
  *
  * `streaming` renders a blinking caret at the tail of the last block so it
@@ -54,11 +54,30 @@ type BlockNode =
   | { type: "heading"; level: number; content: string }
   | { type: "hr" }
   | { type: "list"; ordered: boolean; items: string[] }
+  | { type: "table"; headers: string[]; rows: string[][] }
   | { type: "paragraph"; content: string };
 
 /* ------------------------------------------------------------------ */
 /*  Block parser                                                       */
 /* ------------------------------------------------------------------ */
+
+function splitTableRow(line: string): string[] {
+  const normalized = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return normalized.split("|").map((cell) => cell.trim());
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = splitTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function isTableStart(lines: string[], index: number): boolean {
+  return Boolean(
+    lines[index]?.includes("|") &&
+    lines[index + 1]?.includes("|") &&
+    isTableSeparator(lines[index + 1]),
+  );
+}
 
 function parseBlocks(text: string): BlockNode[] {
   const lines = text.split("\n");
@@ -102,6 +121,22 @@ function parseBlocks(text: string): BlockNode[] {
       continue;
     }
 
+    // GitHub-flavoured table. Assistant answers frequently use these for
+    // resource summaries, so render them as an actual responsive table rather
+    // than exposing the raw pipe syntax to the user.
+    if (isTableStart(lines, i)) {
+      const headers = splitTableRow(lines[i]);
+      const rows: string[][] = [];
+      i += 2; // header + separator
+      while (i < lines.length && lines[i].trim() !== "" && lines[i].includes("|")) {
+        const row = splitTableRow(lines[i]);
+        rows.push(headers.map((_, column) => row[column] ?? ""));
+        i++;
+      }
+      blocks.push({ type: "table", headers, rows });
+      continue;
+    }
+
     // Unordered list
     if (/^[-*+]\s/.test(line)) {
       const items: string[] = [];
@@ -139,7 +174,8 @@ function parseBlocks(text: string): BlockNode[] {
       !lines[i].match(/^#{1,4}\s/) &&
       !lines[i].match(/^[-*+]\s/) &&
       !lines[i].match(/^\d+[.)]\s/) &&
-      !lines[i].match(/^[-*_]{3,}\s*$/)
+      !lines[i].match(/^[-*_]{3,}\s*$/) &&
+      !isTableStart(lines, i)
     ) {
       paraLines.push(lines[i]);
       i++;
@@ -214,6 +250,43 @@ function Block({
             </li>
           ))}
         </Tag>
+      );
+    }
+
+    case "table": {
+      const lastRow = block.rows.length - 1;
+      const lastColumn = block.headers.length - 1;
+      return (
+        <div className="my-3 max-w-full overflow-x-auto rounded-lg border border-current/15">
+          <table className="w-full min-w-[30rem] border-collapse text-left text-xs">
+            <thead className="bg-current/5">
+              <tr>
+                {block.headers.map((header, column) => (
+                  <th
+                    key={column}
+                    scope="col"
+                    className="border-b border-current/15 px-3 py-2.5 font-semibold text-midground"
+                  >
+                    <InlineContent text={header} highlightTerms={highlightTerms} />
+                    {block.rows.length === 0 && column === lastColumn ? caret : null}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-current/10">
+              {block.rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="align-top even:bg-current/[0.025]">
+                  {row.map((cell, column) => (
+                    <td key={column} className="px-3 py-2.5 text-text-secondary">
+                      <InlineContent text={cell} highlightTerms={highlightTerms} />
+                      {rowIndex === lastRow && column === lastColumn ? caret : null}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
     }
 

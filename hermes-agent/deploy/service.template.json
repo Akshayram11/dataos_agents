@@ -29,6 +29,7 @@
       "HERMES_DASHBOARD_PUBLIC_URL": "https://@@host@@/@@agent_id@@/",
       "HERMES_HOME": "/opt/data/hermes",
       "HERMES_DATAOS_VOLUME_ROOT": "/opt/data",
+      "HERMES_SHARE_PROFILE_CREDENTIALS": "true",
       "DATAOS_OWNER_ID": "@@operator_id@@",
       "GIT_ASKPASS": "/opt/hermes/dataos-profile/scripts/bitbucket_askpass.py",
       "GIT_TERMINAL_PROMPT": "0"

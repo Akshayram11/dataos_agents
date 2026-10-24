@@ -29,6 +29,7 @@ def main() -> None:
     skills = sorted((ROOT / "skills").glob("*/SKILL.md"))
     expected_skills = {
         "bitbucket-workspace",
+        "github-workspace",
         "build-data-product",
         "dataos-agent-factory",
         "dataos-bot-orchestrator",

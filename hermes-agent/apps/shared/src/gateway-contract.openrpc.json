@@ -43629,6 +43629,11 @@
             "default": null,
             "title": "Duration S"
           },
+          "is_error": {
+            "default": false,
+            "title": "Is Error",
+            "type": "boolean"
+          },
           "result": {
             "default": null,
             "title": "Result"

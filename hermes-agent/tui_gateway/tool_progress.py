@@ -346,6 +346,8 @@ def _on_tool_complete(sid: str, tool_call_id: str, name: str, args: dict, result
     duration_s = time.time() - started_at if started_at else None
     if duration_s is not None:
         payload["duration_s"] = duration_s
+    from agent.display import _detect_tool_failure
+    payload["is_error"] = bool(_detect_tool_failure(name, result)[0])
     try:
         payload["result"] = json.loads(result)
     except Exception:
