@@ -304,6 +304,12 @@ def _replace_mcp_servers(servers: dict[str, dict]) -> tuple[bool, list[str]]:
 
 def _env_key_for_server(name: str) -> str:
     """Convert server name to an env-var key like ``MCP_MYSERVER_API_KEY``."""
+    # The fixed DataOS data-product MCP and dataos-ctl deliberately share the
+    # owner-scoped credential configured on the Keys page.  Giving this server
+    # a second MCP_* secret makes the UI look configured while the CLI remains
+    # unauthenticated, and lets the two connections silently drift apart.
+    if name.strip().lower() == "dataproduct-mcp":
+        return "DATAOS_USER_API_KEY"
     suffix = re.sub(r"[^A-Za-z0-9_]", "_", name.upper()).strip("_")
     return f"MCP_{suffix}_API_KEY"
 

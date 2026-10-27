@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline validation for the DataOS Hermes distribution."""
+"""Offline validation for the DataOS Botsky distribution."""
 
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def main() -> None:
         raise SystemExit("distribution must require Claude Code OAuth instead of an OpenAI API key")
     if "display:\n  skin: botsky" not in config:
         raise SystemExit("Botsky skin is not active")
-    if 'agent_name: "Botsky Agent"' not in skin or "banner_logo: |" not in skin:
+    if 'agent_name: "Botsky"' not in skin or "banner_logo: |" not in skin:
         raise SystemExit("Botsky branding is incomplete")
     for toolset in ("browser", "computer_use", "image_gen", "video_gen", "tts", "messaging"):
         if f"    - {toolset}" not in config:
@@ -102,8 +102,8 @@ def main() -> None:
         'DATAOS_OWNER_ID: "${DATAOS_OWNER_ID}"',
         'DATAOS_RUN_AS_USER: "${DATAOS_RUN_AS_USER}"',
         'DATAOS_RUN_AS_APIKEY: "${DATAOS_RUN_AS_APIKEY}"',
-        'DATAOS_FQDN: "${DATAOS_FQDN}"',
-        'DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"',
+        'DATAOS_FQDN: "sawaniks-081726.instance.dataos.cloud"',
+        'DATAOS_TENANT_ID: "engineering"',
         'Authorization: "Bearer ${DATAOS_USER_API_KEY}"',
         'url: "https://sawaniks-081726.instance.dataos.cloud/dataproduct-mcp/api/v1"',
         'command: /opt/hermes/.venv/bin/python',

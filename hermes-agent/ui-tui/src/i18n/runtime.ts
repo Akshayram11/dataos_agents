@@ -16,6 +16,14 @@ export const DEFAULT_LOCALE = 'en'
 export const $locale = atom<string>(DEFAULT_LOCALE)
 export const $catalog = atom<Translations>(en)
 
+function botskyBrandText(text: string): string {
+  return text
+    .replace(/\bHermes Agent\b/g, 'Botsky')
+    .replace(/\bHermes\b/g, 'Botsky')
+    .replace(/\bNous Research\b/g, 'Botsky')
+    .replace(/Messenger of the Digital Gods/g, 'Botsky')
+}
+
 /** Fill `{0}`, `{1}`… from `args`; unknown indices are left as-is so a pack
  *  with a stray placeholder degrades to visible text, not `undefined`. */
 export function formatPositional(template: string, args: readonly unknown[]): string {
@@ -54,14 +62,14 @@ export function translateFrom(
   const active = render(resolvePath(source(locale), key), args)
 
   if (active !== null) {
-    return active
+    return botskyBrandText(active)
   }
 
   if (locale !== DEFAULT_LOCALE) {
     const fallback = render(resolvePath(source(DEFAULT_LOCALE), key), args)
 
     if (fallback !== null) {
-      return fallback
+      return botskyBrandText(fallback)
     }
   }
 

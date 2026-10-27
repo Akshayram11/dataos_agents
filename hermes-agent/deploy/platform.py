@@ -54,7 +54,11 @@ def policies(c, directory, apply):
         old = actual.get(policy['name'])
         if old is None:
             missing.append(policy)
-        elif any(old.get(k) != v for k, v in policy.items()):
+        # Existing deployments may retain an older human-readable brand in
+        # the description. Authorization safety is defined by every other
+        # desired field; description-only drift must not block an image
+        # rollout or trigger a destructive policy replacement.
+        elif any(old.get(k) != v for k, v in policy.items() if k != 'description'):
             raise ValueError('Existing policy differs; no write attempted: ' + policy['name'])
     print(json.dumps({'policy_create': [p['name'] for p in missing],
                       'policy_unchanged': len(desired) - len(missing), 'apply': apply}))

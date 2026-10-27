@@ -1,9 +1,9 @@
-# DataOS Hermes Profile
+# Botsky Profile
 
-This is the lean DataOS-specific layer for Hermes Agent. It keeps persistent profiles, memory, skills, cron, delegation, MCP, Git worktrees, and the web/gateway runtime while constraining the agent to verified DataOS evidence.
+This is the lean DataOS-specific layer for Botsky. It keeps persistent profiles, memory, skills, cron, delegation, MCP, Git worktrees, and the web/gateway runtime while constraining the bot to verified DataOS evidence.
 
-The distribution opts out of Hermes' non-essential bundled skills. A running
-DataOS profile receives the essential Hermes runtime skill, seven application
+The distribution opts out of non-essential bundled skills. A running
+DataOS profile receives the essential runtime skill, seven application
 skills (including the pinned Nilus workflow), and the three pinned
 `dataproduct-builder-skills` workflows. Their version-matched grounding
 material is stored under `/opt/data/hermes/dpbs-docs`.
@@ -24,7 +24,7 @@ Credentials are profile-local and never shipped in this distribution.
 - `dataos_resource_apply` must run in lint mode before an explicit, target-specific user approval permits deployment.
 - Secret, API-key, user, tenant, delete, and runtime-stop tools are not available to the model.
 - The Data Product MCP is pinned to its reviewed data-product tools; GitBook is pinned to three read-only documentation tools.
-- Use a dedicated least-privilege DataOS app user. For a shared or production host, isolate the whole Hermes process/container; prompts and in-process approval checks are not a security sandbox.
+- Use a dedicated least-privilege DataOS app user. For a shared or production host, isolate the whole Botsky process/container; prompts and in-process approval checks are not a security sandbox.
 
 ## Install locally
 

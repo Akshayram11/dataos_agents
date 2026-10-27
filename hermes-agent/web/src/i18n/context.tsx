@@ -19,7 +19,7 @@ import { ru } from "./ru";
 import { hu } from "./hu";
 import { ar } from "./ar";
 
-const TRANSLATIONS: Record<Locale, Translations> = {
+const RAW_TRANSLATIONS: Record<Locale, Translations> = {
   en,
   zh,
   "zh-hant": zhHant,
@@ -38,6 +38,40 @@ const TRANSLATIONS: Record<Locale, Translations> = {
   hu,
   ar,
 };
+
+function botskyBrandText(text: string): string {
+  return text
+    .replace(/\bHermes Agent\b/g, "Botsky")
+    .replace(/\bHermes\b/g, "Botsky")
+    .replace(/\bNous Research\b/g, "Botsky")
+    .replace(/Messenger of the Digital Gods/g, "Botsky");
+}
+
+function botskyBrandTranslations<T>(value: T): T {
+  if (typeof value === "string") return botskyBrandText(value) as T;
+  if (typeof value === "function") {
+    const message = value as (...args: unknown[]) => string;
+    return ((...args: unknown[]) => botskyBrandText(message(...args))) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => botskyBrandTranslations(item)) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, botskyBrandTranslations(item)]),
+    ) as T;
+  }
+  return value;
+}
+
+const TRANSLATIONS = Object.fromEntries(
+  Object.entries(RAW_TRANSLATIONS).map(([locale, messages]) => [
+    locale,
+    botskyBrandTranslations(messages),
+  ]),
+) as Record<Locale, Translations>;
+
+const BRANDED_EN = TRANSLATIONS.en;
 
 const SUPPORTED_LOCALES = Object.keys(TRANSLATIONS) as Locale[];
 
@@ -72,7 +106,7 @@ interface I18nContextValue {
 const I18nContext = createContext<I18nContextValue>({
   locale: "en",
   setLocale: () => {},
-  t: en,
+  t: BRANDED_EN,
 });
 
 export function I18nProvider({ children }: { children: ReactNode }) {

@@ -97,6 +97,11 @@ const CATEGORY_META_ICONS: Record<string, typeof KeyRound> = {
   setting: Settings,
 };
 
+const DATAOS_CREDENTIAL_KEYS = new Set([
+  "DATAOS_USER_ID",
+  "DATAOS_USER_API_KEY",
+]);
+
 /* ------------------------------------------------------------------ */
 /*  EnvVarRow — single key edit row                                    */
 /* ------------------------------------------------------------------ */
@@ -629,6 +634,7 @@ export default function EnvPage() {
   // Scroll-to sub-nav in the page header
   const sections = useMemo(() => {
     const items: { id: string; label: string }[] = [
+      { id: "section-dataos", label: "DataOS" },
       { id: "section-oauth", label: "OAuth" },
       { id: "section-providers", label: "Providers" },
     ];
@@ -800,12 +806,13 @@ export default function EnvPage() {
   };
 
   /* ---- Build provider groups ---- */
-  const { providerGroups, nonProviderGrouped, customEntries } = useMemo(() => {
+  const { providerGroups, nonProviderGrouped, customEntries, dataosEntries } = useMemo(() => {
     if (!vars)
       return {
         providerGroups: [],
         nonProviderGrouped: [],
         customEntries: [] as [string, EnvVarInfo][],
+        dataosEntries: [] as [string, EnvVarInfo][],
       };
 
     const providerEntries = Object.entries(vars).filter(
@@ -847,8 +854,9 @@ export default function EnvPage() {
     const otherCategories = ["tool", "messaging", "setting"];
     const nonProvider = otherCategories.map((cat) => {
       const entries = Object.entries(vars).filter(
-        ([, info]) =>
+        ([key, info]) =>
           info.category === cat &&
+          !DATAOS_CREDENTIAL_KEYS.has(key) &&
           !info.channel_managed &&
           (showAdvanced || !info.advanced),
       );
@@ -872,10 +880,15 @@ export default function EnvPage() {
       .filter(([, info]) => info.category === "custom" && !info.channel_managed)
       .sort(([a], [b]) => a.localeCompare(b));
 
+    const dataosEntries = ["DATAOS_USER_ID", "DATAOS_USER_API_KEY"]
+      .map((key) => [key, vars[key]] as [string, EnvVarInfo])
+      .filter(([, info]) => Boolean(info));
+
     return {
       providerGroups: groups,
       nonProviderGrouped: nonProvider,
       customEntries,
+      dataosEntries,
     };
   }, [vars, showAdvanced, t]);
 
@@ -929,6 +942,39 @@ export default function EnvPage() {
           {showAdvanced ? t.env.hideAdvanced : t.env.showAdvanced}
         </Button>
       </div>
+
+      <Card id="section-dataos">
+        <CardHeader className="border-b border-border bg-card">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-base">DataOS credentials</CardTitle>
+          </div>
+          <CardDescription>
+            One user ID and API key pair is shared by dataos-cli and the fixed data-product MCP.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 overflow-hidden pt-4">
+          {dataosEntries.map(([key, info]) => (
+            <EnvVarRow
+              key={key}
+              varKey={key}
+              info={info}
+              edits={edits}
+              setEdits={setEdits}
+              revealed={revealed}
+              saving={saving}
+              onSave={handleSave}
+              onClear={keyClear.requestDelete}
+              onReveal={handleReveal}
+              onCancelEdit={cancelEdit}
+              clearDialogOpen={keyClear.isOpen}
+            />
+          ))}
+          <p className="text-xs text-text-tertiary">
+            After replacing either credential, restart the gateway and open a new chat so both connections reload it.
+          </p>
+        </CardContent>
+      </Card>
 
       <div id="section-oauth">
         <OAuthProvidersCard

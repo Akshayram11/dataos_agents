@@ -21,6 +21,8 @@ import tempfile
 
 
 COMMAND = ["/usr/local/bin/dataos-ctl", "develop", "assist", "mcp", "run"]
+DEFAULT_DATAOS_FQDN = "sawaniks-081726.instance.dataos.cloud"
+DEFAULT_DATAOS_TENANT = "engineering"
 
 
 def resolve_credential(name: str) -> str:
@@ -52,8 +54,8 @@ def ensure_cli_context() -> Path:
     key is deliberately never written to a credential file.
     """
 
-    fqdn = os.environ.get("DATAOS_FQDN", "").strip()
-    tenant = os.environ.get("DATAOS_TENANT_ID", "").strip()
+    fqdn = os.environ.get("DATAOS_FQDN", "").strip() or DEFAULT_DATAOS_FQDN
+    tenant = os.environ.get("DATAOS_TENANT_ID", "").strip() or DEFAULT_DATAOS_TENANT
     if not fqdn or not tenant:
         raise RuntimeError("DATAOS_FQDN and DATAOS_TENANT_ID are required")
 
@@ -61,16 +63,22 @@ def ensure_cli_context() -> Path:
     # but keep the DataOS Service run-as projection as a safe fallback.  Do not
     # require the profile config to copy one variable into the other: an empty
     # interpolation would mask the valid projected Service credentials.
-    user_id = (
-        resolve_credential("DATAOS_USER_ID")
-        or resolve_credential("DATAOS_LOGIN_USER")
-        or resolve_credential("DATAOS_OWNER_ID")
-        or resolve_credential("DATAOS_RUN_AS_USER")
-    )
-    api_key = (
-        resolve_credential("DATAOS_USER_API_KEY")
-        or resolve_credential("DATAOS_RUN_AS_APIKEY")
-    )
+    owner_user = resolve_credential("DATAOS_USER_ID")
+    owner_key = resolve_credential("DATAOS_USER_API_KEY")
+    if owner_user or owner_key:
+        if not owner_user or not owner_key:
+            raise RuntimeError(
+                "Personal DataOS credentials are incomplete; set both "
+                "DATAOS_USER_ID and DATAOS_USER_API_KEY on the Keys page"
+            )
+        user_id, api_key = owner_user, owner_key
+    else:
+        user_id = (
+            resolve_credential("DATAOS_LOGIN_USER")
+            or resolve_credential("DATAOS_OWNER_ID")
+            or resolve_credential("DATAOS_RUN_AS_USER")
+        )
+        api_key = resolve_credential("DATAOS_RUN_AS_APIKEY")
     if not user_id or not api_key:
         raise RuntimeError("DATAOS user ID and API key are required")
 

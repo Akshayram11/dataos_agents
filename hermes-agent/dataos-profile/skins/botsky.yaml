@@ -1,5 +1,5 @@
 name: botsky
-description: Botsky — gold CLI banner for the DataOS Always-on Agent
+description: Botsky — gold CLI banner for DataOS
 colors:
   banner_border: "#CD7F32"
   banner_title: "#FFD700"
@@ -30,8 +30,8 @@ colors:
   shell_dollar: "#4dabf7"
   voice_status_bg: "#1a1a2e"
 branding:
-  agent_name: "Botsky Agent"
-  welcome: "Welcome to Botsky Agent! Type your message or /help for commands."
+  agent_name: "Botsky"
+  welcome: "Welcome to Botsky! Type your message or /help for commands."
   goodbye: "Goodbye! ☤"
   response_label: " ☤ Botsky "
   prompt_symbol: "❯"

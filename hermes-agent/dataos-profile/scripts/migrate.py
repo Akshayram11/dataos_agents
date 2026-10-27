@@ -33,6 +33,9 @@ DATAPRODUCT_MCP_BLOCK = '''  dataproduct-mcp:
 
 '''
 
+DATAOS_FQDN = "sawaniks-081726.instance.dataos.cloud"
+DATAOS_TENANT = "engineering"
+
 
 def canonicalize_dataproduct_mcp(text: str) -> str:
     """Replace old/manual data-product connections without retaining tokens."""
@@ -70,6 +73,41 @@ def remove_openai_key(home: Path) -> None:
     print("[dataos] removed retired OpenAI credential")
 
 
+def migrate_dataproduct_key(home: Path) -> None:
+    """Copy the legacy per-MCP token into the shared DataOS credential slot.
+
+    Older dashboard builds saved the fixed data-product MCP token as
+    ``MCP_DATAPRODUCT_MCP_API_KEY``.  The CLI never read that variable, so the
+    two DataOS connections appeared independently configured.  Preserve the
+    old entry for rollback and copy it only when the canonical key is absent.
+    Secret values are never printed.
+    """
+
+    env_path = home / ".env"
+    if not env_path.is_file():
+        return
+    original = env_path.read_text(encoding="utf-8")
+    assignments: dict[str, str] = {}
+    for line in original.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        assignments[key.strip()] = value
+    if assignments.get("DATAOS_USER_API_KEY", "").strip():
+        return
+    legacy = assignments.get("MCP_DATAPRODUCT_MCP_API_KEY", "").strip()
+    if not legacy:
+        return
+    separator = "" if not original or original.endswith("\n") else "\n"
+    updated = f"{original}{separator}DATAOS_USER_API_KEY={legacy}\n"
+    tmp = env_path.with_name(env_path.name + ".dataos-migrate.tmp")
+    tmp.write_text(updated, encoding="utf-8")
+    tmp.chmod(stat.S_IMODE(env_path.stat().st_mode))
+    os.replace(tmp, env_path)
+    print("[dataos] migrated data-product credential to shared DataOS key")
+
+
 def main() -> None:
     path = Path(os.environ.get("HERMES_HOME", "/opt/data")) / "config.yaml"
     if not path.is_file():
@@ -99,8 +137,8 @@ def main() -> None:
         '      DATAOS_OWNER_ID: "${DATAOS_OWNER_ID}"\n'
         '      DATAOS_RUN_AS_USER: "${DATAOS_RUN_AS_USER}"\n'
         '      DATAOS_RUN_AS_APIKEY: "${DATAOS_RUN_AS_APIKEY}"\n'
-        '      DATAOS_FQDN: "${DATAOS_FQDN}"\n'
-        '      DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"\n'
+        f'      DATAOS_FQDN: "{DATAOS_FQDN}"\n'
+        f'      DATAOS_TENANT_ID: "{DATAOS_TENANT}"\n'
         '      LOG_LEVEL: "error"'
     )
 
@@ -129,6 +167,7 @@ def main() -> None:
 
     home = path.parent
     remove_openai_key(home)
+    migrate_dataproduct_key(home)
 
     # This distribution uses a Claude Code OAuth setup-token, not an OpenAI
     # API key. Migrate the persisted model selection on existing Volumes.
@@ -153,13 +192,34 @@ def main() -> None:
 
     if updated == original:
         print("[dataos] persisted profile already current")
-        return
+    else:
+        tmp = path.with_name(path.name + ".dataos-migrate.tmp")
+        tmp.write_text(updated, encoding="utf-8")
+        tmp.chmod(stat.S_IMODE(path.stat().st_mode))
+        os.replace(tmp, path)
+        print("[dataos] migrated persisted profile credential and platform boundaries")
 
-    tmp = path.with_name(path.name + ".dataos-migrate.tmp")
-    tmp.write_text(updated, encoding="utf-8")
-    tmp.chmod(stat.S_IMODE(path.stat().st_mode))
-    os.replace(tmp, path)
-    print("[dataos] migrated persisted profile credential and platform boundaries")
+    # Existing named profiles have their own config.yaml. They are not the
+    # launch profile, so the normal root migration above does not touch them.
+    # Pin only the non-secret DataOS target metadata in those configs; profile
+    # credentials remain isolated/shared through the existing secret scope.
+    for profile_config in sorted((home / "profiles").glob("*/config.yaml")):
+        migrate_dataproduct_key(profile_config.parent)
+        profile_original = profile_config.read_text(encoding="utf-8")
+        profile_updated = profile_original.replace(
+            'DATAOS_FQDN: "${DATAOS_FQDN}"',
+            f'DATAOS_FQDN: "{DATAOS_FQDN}"',
+        ).replace(
+            'DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"',
+            f'DATAOS_TENANT_ID: "{DATAOS_TENANT}"',
+        )
+        if profile_updated == profile_original:
+            continue
+        profile_tmp = profile_config.with_name(profile_config.name + ".dataos-migrate.tmp")
+        profile_tmp.write_text(profile_updated, encoding="utf-8")
+        profile_tmp.chmod(stat.S_IMODE(profile_config.stat().st_mode))
+        os.replace(profile_tmp, profile_config)
+        print(f"[dataos] pinned DataOS target metadata for profile {profile_config.parent.name}")
 
 
 if __name__ == "__main__":

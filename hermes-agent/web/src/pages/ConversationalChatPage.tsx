@@ -503,7 +503,7 @@ export default function ConversationalChatPage({ isActive = true }: { isActive?:
               <Bot className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-base font-bold text-midground">{profile || "Botsky Agent"}</h1>
+              <h1 className="truncate text-base font-bold text-midground">{profile || "Botsky"}</h1>
               <p className="flex items-center gap-1.5 truncate text-xs text-text-tertiary">
                 <span className={cn("h-1.5 w-1.5 rounded-full", connection === "open" ? "bg-emerald-400" : "bg-amber-400")} />
                 {connection === "open" ? "Connected to DataOS workspace" : "Connecting to agent"}

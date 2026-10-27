@@ -54,8 +54,11 @@ mcp_servers:
       DATAOS_OWNER_ID: "${DATAOS_OWNER_ID}"
       DATAOS_RUN_AS_USER: "${DATAOS_RUN_AS_USER}"
       DATAOS_RUN_AS_APIKEY: "${DATAOS_RUN_AS_APIKEY}"
-      DATAOS_FQDN: "${DATAOS_FQDN}"
-      DATAOS_TENANT_ID: "${DATAOS_TENANT_ID}"
+      # Non-secret deployment metadata is pinned here because MCP stdio
+      # subprocesses receive a scrubbed environment and profile scopes do not
+      # inherit arbitrary Service environment variables.
+      DATAOS_FQDN: "sawaniks-081726.instance.dataos.cloud"
+      DATAOS_TENANT_ID: "engineering"
       LOG_LEVEL: "error"
     trust: untrusted
     timeout: 180

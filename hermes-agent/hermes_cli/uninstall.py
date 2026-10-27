@@ -786,7 +786,7 @@ def run_uninstall(args):
         return
 
     print()
-    _print_box("│            ☤ Hermes Agent Uninstaller                  │", Colors.MAGENTA)
+    _print_box("│                 Botsky Uninstaller                     │", Colors.MAGENTA)
     print()
 
     # Show what will be affected
@@ -1138,7 +1138,7 @@ def _perform_uninstall(
     for line, col in _RELOAD_HINT[windows]:
         print(color(line, col) if col else line)
     print()
-    print("Thank you for using Hermes Agent! ☤")
+    print("Thank you for using Botsky!")
     print()
 
 

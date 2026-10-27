@@ -2,7 +2,7 @@
   {
     "name": "hermes-@@agent_id@@-compute-use",
     "collection": "@@tenant@@",
-    "description": "Run the private Hermes application on its configured compute",
+    "description": "Run the private Botsky application on its configured compute",
     "subjects": {"tags": ["users:id:@@agent_id@@"]},
     "predicates": ["read", "use"],
     "objects": {"tags": [["dataos:resource:compute:v2alpha:@@compute@@"]]},
@@ -11,7 +11,7 @@
   {
     "name": "hermes-@@agent_id@@-operator-run-as",
     "collection": "@@tenant@@",
-    "description": "Allow the owner to deploy the dedicated Hermes identity",
+    "description": "Allow the owner to deploy the dedicated Botsky identity",
     "subjects": {"tags": ["users:id:@@operator_id@@"]},
     "predicates": ["run_as"],
     "objects": {"tags": [["users:id:@@agent_id@@"]]},
@@ -47,7 +47,7 @@
   {
     "name": "hermes-@@agent_id@@-private-ingress",
     "collection": "system",
-    "description": "Allow only the configured owner to open DataOS Hermes",
+    "description": "Allow only the configured owner to open Botsky",
     "subjects": {"tags": ["users:id:@@operator_id@@"]},
     "predicates": ["get", "post"],
     "objects": {"paths": ["/@@agent_id@@", "/@@agent_id@@/**"]},

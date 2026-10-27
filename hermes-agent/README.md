@@ -1,6 +1,6 @@
-# DataOS Hermes
+# Botsky
 
-Lean, DataOS-specific distribution of [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) for persistent operational and agent-building bots.
+Lean, DataOS-specific Botsky distribution for persistent operational and agent-building bots. The runtime remains based on the upstream [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) project.
 
 ## What remains
 

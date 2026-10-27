@@ -146,7 +146,7 @@ export default function WorkspacesPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><HardDrive className="h-4 w-4" /> Persistent workspace</CardTitle></CardHeader><CardContent className="grid gap-2 text-sm"><p className="break-all font-mono text-xs">{state.workspace_path || "$HERMES_HOME/workspace/repos/<repository>"}</p><p className="text-muted-foreground">Files, Git history, agent sessions and generated artifacts survive Service restarts on the 10 GiB DataOS disk.</p></CardContent></Card>
-        <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Wrench className="h-4 w-4" /> Vulcan validation</CardTitle></CardHeader><CardContent className="grid gap-2 text-sm"><div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /><code>vulcan</code> → isolated Python runtime</div><p className="text-muted-foreground">Vulcan uses its pinned Python 3.13 environment while Hermes stays on its own Python runtime. Run commands from the connected repository workspace.</p></CardContent></Card>
+        <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Wrench className="h-4 w-4" /> Vulcan validation</CardTitle></CardHeader><CardContent className="grid gap-2 text-sm"><div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" /><code>vulcan</code> → isolated Python runtime</div><p className="text-muted-foreground">Vulcan uses its pinned Python 3.13 environment while Botsky stays on its own Python runtime. Run commands from the connected repository workspace.</p></CardContent></Card>
       </div>
     </div>
   );
